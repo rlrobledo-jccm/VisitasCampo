@@ -101,6 +101,10 @@ details{margin-top:8px}summary{font-size:13px;color:var(--pri2);cursor:pointer;p
 .sigline{position:absolute;left:8%;right:8%;bottom:26%;border-bottom:1.5px solid #c9d1de;pointer-events:none}
 .sigx{position:absolute;left:8%;bottom:calc(26% + 4px);color:#aab4c3;font-size:18px;pointer-events:none}
 @media (orientation:landscape) and (max-height:500px){.sigbox{height:58vh}.sigpan{padding-top:8px}}
+.fmts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 4px}
+.fopt{display:flex;margin:0;border:1.5px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;color:var(--ink)}
+.fopt input{display:none}.fopt span{display:flex;flex-direction:column;gap:3px}.fopt b{font-size:15px}.fopt small{font-size:12px;color:var(--mute)}
+.fopt:has(input:checked){border-color:var(--pri);background:#eef3fa}
 .note{background:#eef3fa;border-radius:10px;padding:10px 12px;font-size:13px;color:#344054;margin-top:10px}
 </style>
 </head>
@@ -225,6 +229,24 @@ details{margin-top:8px}summary{font-size:13px;color:var(--pri2);cursor:pointer;p
   <form id="pwdForm" autocomplete="off"><label for="pwdIn">Contraseña del certificado</label><input type="password" id="pwdIn" autocomplete="off"><div class="hint" id="pwdErr" style="color:#c0392b"></div>
   <div class="btns" style="justify-content:flex-end"><button class="btn sm" id="pwdAlt" type="button">Descargar sin firmar</button><button class="btn sm" id="pwdCancel" type="button">Cancelar</button><button class="btn sm pri" id="pwdOk" type="submit">Firmar</button></div></form>
   <div class="hint">La contraseña no se guarda: se usa solo para esta firma.</div>
+</div></div>
+
+<div class="sheet sig" id="genSheet"><div class="pan sigpan" style="max-width:480px">
+  <h3>Generar documento</h3>
+  <div class="fmts">
+    <label class="fopt"><input type="radio" name="gfmt" value="pdf" checked><span><b>📄 PDF</b><small>Para registrar y entregar. Con tu firma digital incrustada.</small></span></label>
+    <label class="fopt"><input type="radio" name="gfmt" value="docx"><span><b>📝 Word</b><small>Editable, sin firma digital.</small></span></label>
+  </div>
+  <form id="genForm" autocomplete="off">
+    <div id="genSignBox">
+      <label class="chk"><input type="checkbox" id="genSign" checked> Firmar con mi certificado digital</label>
+      <div class="hint" id="genCertInfo"></div>
+      <div id="genPwdBox"><label for="genPwd">Contraseña del certificado</label><input type="password" id="genPwd" autocomplete="off"><div class="hint">La contraseña no se guarda: se usa solo para esta firma.</div></div>
+    </div>
+    <div class="hint" id="genNoCert"></div>
+    <div class="hint" id="genErr" style="color:#c0392b"></div>
+    <div class="btns" style="justify-content:flex-end"><button class="btn sm" id="genCancel" type="button">Cancelar</button><button class="btn sm pri" id="genOk" type="submit">Generar</button></div>
+  </form>
 </div></div>
 
 <div id="toast"></div>
@@ -888,12 +910,14 @@ const MODELOS = {
       {t:'Datos de la inspección', campos:DATOS},
       {t:'Persona presente / interesado', campos:[{k:'intNombre',l:'Nombre y apellidos'},{k:'intDni',l:'DNI / NIE'},{k:'intCalidad',l:'En calidad de',t:'select',o:['','Titular','Representante','Encargado/a','Trabajador/a','Otro']},{k:'intDom',l:'Domicilio'},{k:'intNoFirma',l:'El/la interesado/a se niega a firmar',t:'check'}]},
       {t:'Objeto de la inspección', campos:[{k:'objeto',l:'Objeto de la inspección',t:'area'}]},
+      {t:'Descripción de la actuación', campos:[{k:'descAct',l:'Descripción de la actuación',t:'area'}]},
     ],
     obs:'Hechos constatados', extras:[{k:'manif',l:'Manifestaciones del interesado'},{k:'requerimientos',l:'Requerimientos / medidas'}], firmas:['tecnico','interesado'] },
   acta_ini:{ nombre:'Acta de inicio', titulo:'Acta de inicio', corto:'Acta_inicio',
     secciones:[
       {t:'Datos', campos:['fecha','horaIni','municipio','paraje','polpar','expediente']},
       {t:'Actuación', campos:[{k:'actuacion',l:'Denominación de la actuación / obra',t:'area',full:1},{k:'promotor',l:'Promotor / titular'},{k:'contratista',l:'Contratista / ejecutor'},{k:'director',l:'Director/a o responsable técnico'},{k:'plazo',l:'Plazo de ejecución'}]},
+      {t:'Descripción de la actuación', campos:[{k:'descAct',l:'Descripción de la actuación',t:'area'}]},
       {t:'Asistentes', campos:[{k:'asistentes',l:'Asistentes (nombre y cargo)',t:'area'}]},
     ],
     obs:'Comprobaciones y condicionantes', extras:[], firmas:['tecnico','promotor'] },
@@ -901,6 +925,7 @@ const MODELOS = {
     secciones:[
       {t:'Datos', campos:['fecha','horaIni','municipio','paraje','polpar','expediente']},
       {t:'Actuación', campos:[{k:'actuacion',l:'Denominación de la actuación / obra',t:'area',full:1},{k:'promotor',l:'Promotor / titular'},{k:'contratista',l:'Contratista / ejecutor'},{k:'fechaIniAct',l:'Fecha de inicio de la actuación',t:'date'},{k:'resultado',l:'Resultado',t:'select',o:['','Conforme','Conforme con observaciones','No conforme']}]},
+      {t:'Descripción de la actuación', campos:[{k:'descAct',l:'Descripción de la actuación',t:'area'}]},
       {t:'Asistentes', campos:[{k:'asistentes',l:'Asistentes (nombre y cargo)',t:'area'}]},
     ],
     obs:'Comprobaciones realizadas', extras:[{k:'deficiencias',l:'Deficiencias / correcciones pendientes'}], firmas:['tecnico','promotor'] },
@@ -1735,29 +1760,270 @@ const PKI = (() => {
   }
 
   // ---------- Firma CAdES-BES con contenido incluido (.csig) ----------
-  async function signCades(p12buf, pwd, content) {
+  async function buildCms(p12buf, pwd, content, detached) {
     const { pk8, cert, chain } = await openP12(p12buf, pwd);
     const now = new Date();
     if (cert.notAfter && cert.notAfter < now) throw new Error('El certificado está caducado (' + cert.notAfter.toLocaleDateString('es-ES') + ')');
     const key = await crypto.subtle.importKey('pkcs8', pk8, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
     const sha256Alg = SEQ(OID('2.16.840.1.101.3.4.2.1'), NULL);
     const md = await sha('SHA-256', content), certHash = await sha('SHA-256', cert.der);
-    const attrs = [
+    const list = [
       SEQ(OID('1.2.840.113549.1.9.3'), SET(OID('1.2.840.113549.1.7.1'))),
-      SEQ(OID('1.2.840.113549.1.9.5'), SET(UTC(now))),
       SEQ(OID('1.2.840.113549.1.9.4'), SET(OCT(md))),
       SEQ(OID('1.2.840.113549.1.9.16.2.47'), SET(SEQ(SEQ(SEQ(OCT(certHash)))))),
-    ].sort((a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; });
+    ];
+    if (!detached) list.push(SEQ(OID('1.2.840.113549.1.9.5'), SET(UTC(now)))); // en PAdES la hora va en /M
+    const attrs = list.sort((a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; });
     const signedAttrsSet = SET(...attrs);
     const sig = new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, signedAttrsSet));
     const signedAttrs = cat(new Uint8Array([0xa0]), signedAttrsSet.subarray(1));
     const signerInfo = SEQ(INT(1), SEQ(cert.issuerRaw, cert.serialRaw), sha256Alg, signedAttrs, SEQ(OID('1.2.840.113549.1.1.1'), NULL), OCT(sig));
     const certsField = CTX(0, cat(cert.der, ...chain.filter(c => c.der !== cert.der).map(c => c.der)));
-    const signedData = SEQ(INT(1), SET(sha256Alg), SEQ(OID('1.2.840.113549.1.7.1'), CTX(0, OCT(content))), certsField, SET(signerInfo));
-    return { csig: SEQ(OID('1.2.840.113549.1.7.2'), CTX(0, signedData)), info: describe(cert), when: now };
+    const encap = detached ? SEQ(OID('1.2.840.113549.1.7.1')) : SEQ(OID('1.2.840.113549.1.7.1'), CTX(0, OCT(content)));
+    const signedData = SEQ(INT(1), SET(sha256Alg), encap, certsField, SET(signerInfo));
+    return { cms: SEQ(OID('1.2.840.113549.1.7.2'), CTX(0, signedData)), info: describe(cert), when: now };
   }
+  async function signCades(p12buf, pwd, content) { const r = await buildCms(p12buf, pwd, content, false); return { csig: r.cms, info: r.info, when: r.when }; }
+  async function signDetached(p12buf, pwd, content) { return (await buildCms(p12buf, pwd, content, true)).cms; }
   async function inspect(p12buf, pwd) { const { cert } = await openP12(p12buf, pwd); return describe(cert); }
-  return { inspect, signCades, errMsg, _test: { des3CbcDecrypt, p12kdf } };
+  return { inspect, signCades, signDetached, errMsg, _test: { des3CbcDecrypt, p12kdf } };
+})();
+
+const PDFW={R:[278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584, 0, 556, 0, 222, 556, 333, 1000, 556, 556, 333, 1000, 667, 333, 1000, 0, 611, 0, 0, 222, 222, 333, 333, 350, 556, 1000, 333, 1000, 500, 333, 944, 0, 500, 667, 278, 333, 556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 333, 737, 552, 400, 549, 333, 333, 333, 576, 537, 333, 333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556, 556, 556, 556, 549, 611, 556, 556, 556, 556, 500, 556, 500],B:[278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584, 0, 556, 0, 278, 556, 500, 1000, 556, 556, 333, 1000, 667, 333, 1000, 0, 611, 0, 0, 278, 278, 500, 500, 350, 556, 1000, 333, 1000, 556, 333, 944, 0, 500, 667, 278, 333, 556, 556, 556, 556, 280, 556, 333, 737, 370, 556, 584, 333, 737, 552, 400, 549, 333, 333, 333, 576, 556, 333, 333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611, 611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556]};
+
+// =====================================================================
+// GENERADOR PDF (A4) + FIRMA PAdES INCRUSTADA (sin dependencias)
+// Recibe el mismo modelo que el Word. Imágenes en JPEG.
+// =====================================================================
+const PDF = (() => {
+  const PW = 595.28, PH = 841.89, ML = 70.87, MR = 70.87, MT = 104, MB = 72, CW = PW - ML - MR;
+  const TZ = 0.82; // Arial Narrow ≈ Arial al 82 %
+  const COL = { pri: [0, 40 / 255, 85 / 255], gray: [119 / 255, 119 / 255, 121 / 255], tint: [230 / 255, 234 / 255, 240 / 255], border: [167 / 255, 180 / 255, 198 / 255], ink: [0.1, 0.12, 0.16], link: [5 / 255, 99 / 255, 193 / 255] };
+  const FN = { R: 'F1', B: 'F2', I: 'F3' };
+  const CP = { 0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87, 0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F };
+  const code = ch => { const c = ch.codePointAt(0); if (c < 128) return c; if (c >= 0xA0 && c <= 0xFF) return c; return CP[c] || 63; };
+  const W = (s, f, sz) => { const t = f === 'B' ? PDFW.B : PDFW.R; let w = 0; for (const ch of String(s)) { const c = code(ch); if (c >= 32) w += t[c - 32] || 556; } return w * sz / 1000 * TZ; };
+  const str = s => { let o = '('; for (const ch of String(s)) { const c = code(ch); if (c === 40 || c === 41 || c === 92) o += '\\' + String.fromCharCode(c); else if (c < 32 || c > 126) o += '\\' + c.toString(8).padStart(3, '0'); else o += String.fromCharCode(c); } return o + ')'; };
+  const rgb = (c, s) => c.map(v => v.toFixed(3)).join(' ') + (s ? ' RG' : ' rg');
+  const n2 = v => (Math.round(v * 100) / 100).toString();
+
+  function wrap(text, f, sz, maxW) {
+    const out = [];
+    for (const para of String(text ?? '').split('\n')) {
+      let cur = '';
+      for (const word of para.split(/ +/)) {
+        const t = cur ? cur + ' ' + word : word;
+        if (W(t, f, sz) <= maxW) { cur = t; continue; }
+        if (cur) out.push(cur);
+        if (W(word, f, sz) <= maxW) { cur = word; continue; }
+        let part = ''; for (const ch of word) { if (W(part + ch, f, sz) > maxW && part) { out.push(part); part = ch; } else part += ch; }
+        cur = part;
+      }
+      out.push(cur);
+    }
+    return out;
+  }
+
+  async function deflate(bytes) {
+    const s = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+    return new Uint8Array(await new Response(s).arrayBuffer());
+  }
+  const te = new TextEncoder();
+  const cat = (...a) => { const o = new Uint8Array(a.reduce((s, x) => s + x.length, 0)); let p = 0; for (const x of a) { o.set(x, p); p += x.length; } return o; };
+  function find(buf, s, from = 0) { const n = te.encode(s); outer: for (let i = from; i <= buf.length - n.length; i++) { for (let j = 0; j < n.length; j++) if (buf[i + j] !== n[j]) continue outer; return i; } return -1; }
+  const pdfDate = d => { const p = x => String(x).padStart(2, '0'); const o = -d.getTimezoneOffset(), s = o >= 0 ? '+' : '-'; return `D:${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}${s}${p(Math.floor(Math.abs(o) / 60))}'${p(Math.abs(o) % 60)}'`; };
+
+  /* model: igual que buildDocx; opts.sign = { cms: async(bytes)=>Uint8Array, name, reason, location } */
+  async function build(d, opts = {}) {
+    const pages = [], images = [];
+    let pg, y;
+    const newPage = () => { pg = { ops: [], links: [] }; pages.push(pg); y = PH - MT; };
+    const need = h => { if (y - h < MB) newPage(); };
+    const avail = () => y - MB;
+    const op = s => pg.ops.push(s);
+    const txt = (x, by, s, f, sz, c) => op(`BT /${FN[f]} ${sz} Tf ${TZ * 100} Tz ${rgb(c || COL.ink)} ${n2(x)} ${n2(by)} Td ${str(s)} Tj ET`);
+    const txtC = (cx, by, s, f, sz, c) => txt(cx - W(s, f, sz) / 2, by, s, f, sz, c);
+    const rect = (x, yy, w, h, fill, stroke) => { if (fill) op(`${rgb(fill)} ${n2(x)} ${n2(yy)} ${n2(w)} ${n2(h)} re f`); if (stroke) op(`0.5 w ${rgb(stroke, 1)} ${n2(x)} ${n2(yy)} ${n2(w)} ${n2(h)} re S`); };
+    const hline = (x1, x2, yy, c, w) => op(`${w || 0.5} w ${rgb(c, 1)} ${n2(x1)} ${n2(yy)} m ${n2(x2)} ${n2(yy)} l S`);
+    const addImg = im => { images.push(im); return 'Im' + images.length; };
+    const drawImg = (name, x, yy, w, h) => op(`q ${n2(w)} 0 0 ${n2(h)} ${n2(x)} ${n2(yy)} cm /${name} Do Q`);
+    const fit = (w, h, mw, mh) => { let a = mw, b = mw * h / w; if (b > mh) { b = mh; a = mh * w / h; } return [a, b]; };
+    const CM = 28.3465;
+    const photoDims = b => {
+      const cap = wrap(`Foto ${b.n}.` + (b.comment ? ' ' + b.comment.trim() : ''), 'R', 10, CW), meta = b.metaLine ? wrap(b.metaLine, 'R', 8, CW) : [];
+      const textH = cap.length * 12.5 + meta.length * 10 + 10;
+      const [w, h] = fit(b.w, b.h, 15 * CM, Math.min(16.5 * CM, PH - MT - MB - textH - 20));
+      return { cap, meta, w, h, total: h + textH + 14 };
+    };
+
+    newPage();
+    // Título
+    y -= 18; txt(ML, y, (d.title || 'INFORME').toUpperCase(), 'B', 17, COL.pri); y -= 7; hline(ML, PW - MR, y, COL.pri, 1.4); y -= 16;
+    if (d.subtitle) { for (const l of wrap(d.subtitle, 'B', 12, CW)) { txt(ML, y, l, 'B', 12); y -= 15; } }
+    if (d.meta) { txt(ML, y, d.meta, 'I', 8.5, COL.gray); y -= 18; }
+
+    for (let bi = 0; bi < d.blocks.length; bi++) {
+      const b = d.blocks[bi], nx = d.blocks[bi + 1];
+      if (b.type === 'h') { need(nx && nx.type === 'photo' ? 30 + photoDims(nx).total : nx && nx.type === 'img' ? 320 : nx && nx.type === 'firmas' ? 150 : 70); y -= 12; txt(ML, y, b.text.toUpperCase(), 'B', 11.5, COL.pri); y -= 10; }
+      else if (b.type === 'p') {
+        const t = (b.text || '').trim();
+        const lines = t ? t.split(/\n+/).flatMap(pp => [...wrap(pp.trim(), 'R', 11, CW), null]) : (b.empty ? [b.empty] : []);
+        for (const l of lines) { if (l === null) { y -= 4; continue; } need(14); txt(ML, y - 10, l, t ? 'R' : 'I', 11, t ? COL.ink : COL.gray); y -= 14; }
+        y -= 4;
+      }
+      else if (b.type === 'kv') {
+        const rows = b.rows.filter(r => r[1] != null && String(r[1]).trim() !== ''); if (!rows.length) continue;
+        const w0 = CW * 2900 / 9070, w1 = CW - w0, pad = 4.5, lh = 13;
+        y -= 2;
+        for (const [k, v] of rows) {
+          const a = wrap(k, 'B', 10, w0 - 2 * pad), bb = wrap(typeof v === 'object' ? v.text : v, 'R', 10.5, w1 - 2 * pad);
+          const h = Math.max(a.length, bb.length) * lh + 2 * pad - 2;
+          need(h);
+          rect(ML, y - h, w0, h, COL.tint); rect(ML, y - h, w0, h, null, COL.border); rect(ML + w0, y - h, w1, h, null, COL.border);
+          a.forEach((l, i) => txt(ML + pad, y - pad - 9.5 - i * lh, l, 'B', 10, COL.pri));
+          bb.forEach((l, i) => txt(ML + w0 + pad, y - pad - 9.5 - i * lh, l, 'R', 10.5));
+          y -= h;
+        }
+        y -= 8;
+      }
+      else if (b.type === 'img') {
+        const [w, h] = fit(b.w, b.h, (b.maxWcm || 16) * CM, Math.min((b.maxHcm || 12) * CM, PH - MT - MB - 60));
+        const cap = b.caption ? wrap(b.caption, 'R', 9, CW) : [];
+        need(h + 8 + cap.length * 11 + 6);
+        y -= 6; drawImg(addImg(b), ML + (CW - w) / 2, y - h, w, h); y -= h + 6;
+        for (const l of cap) { txtC(ML + CW / 2, y - 8, l, 'R', 9, COL.gray); y -= 11; }
+        y -= 8;
+      }
+      else if (b.type === 'photo') {
+        const { cap, meta, w, h, total } = photoDims(b);
+        need(total);
+        y -= 12; drawImg(addImg(b), ML + (CW - w) / 2, y - h, w, h); y -= h + 4;
+        cap.forEach((l, i) => {
+          if (i === 0) { const pre = `Foto ${b.n}.`, rest = l.slice(pre.length), tw = W(pre, 'B', 10) + W(rest, 'R', 10), x0 = ML + (CW - tw) / 2; txt(x0, y - 9, pre, 'B', 10, COL.pri); txt(x0 + W(pre, 'B', 10), y - 9, rest, 'R', 10); }
+          else txtC(ML + CW / 2, y - 9, l, 'R', 10);
+          y -= 12.5;
+        });
+        for (const l of meta) { txtC(ML + CW / 2, y - 7, l, 'R', 8, COL.gray); y -= 10; }
+        y -= 10;
+      }
+      else if (b.type === 'table') {
+        const ws = b.widths.map(w => w * CW / 9070), pad = 3.5, sz = 8.5, lh = 10.5;
+        const row = (cells, head) => {
+          const wr = cells.map((c, i) => wrap(typeof c === 'object' && c ? c.text : c, head ? 'B' : 'R', sz, ws[i] - 2 * pad));
+          const h = Math.max(...wr.map(l => l.length)) * lh + 2 * pad;
+          if (avail() < h) { newPage(); if (!head) row(b.head, true); }
+          let x = ML;
+          cells.forEach((c, i) => {
+            if (head) rect(x, y - h, ws[i], h, COL.tint);
+            rect(x, y - h, ws[i], h, null, COL.border);
+            const isLink = c && typeof c === 'object' && c.url;
+            wr[i].forEach((l, k) => {
+              txt(x + pad, y - pad - 8 - k * lh, l, head ? 'B' : 'R', sz, head ? COL.pri : isLink ? COL.link : COL.ink);
+              if (isLink) { const lw = W(l, 'R', sz); hline(x + pad, x + pad + lw, y - pad - 9.5 - k * lh, COL.link, 0.5); pg.links.push({ x: x + pad, y: y - pad - 11 - k * lh, w: lw, h: lh, url: c.url }); }
+            });
+            x += ws[i];
+          });
+          y -= h;
+        };
+        need(40); row(b.head, true); b.rows.forEach(r => row(r, false)); y -= 6;
+      }
+      else if (b.type === 'firmas') {
+        const per = Math.min(3, b.cols.length), cw = CW / per;
+        need(20); y -= 10;
+        for (let r = 0; r < b.cols.length; r += per) {
+          const chunk = b.cols.slice(r, r + per);
+          const blocksH = chunk.map(c => 14 + 50 + 6 + 13 + (c.nota ? wrap(c.nota, 'R', 8.5, cw - 10).length * 10 : 0) + (c.fecha ? 10 : 0));
+          const h = Math.max(...blocksH) + 14;
+          need(h);
+          chunk.forEach((c, i) => {
+            const x = ML + i * cw, cx = x + cw / 2; let yy = y;
+            for (const l of wrap(c.rol, 'B', 10, cw - 10)) { txtC(cx, yy - 9, l, 'B', 10, COL.pri); yy -= 12; }
+            const lineY = yy - 54;
+            if (c.img) { const [w, hh] = fit(c.img.w, c.img.h, 4.4 * CM, 1.7 * CM); drawImg(addImg(c.img), cx - w / 2, lineY + 3, w, hh); }
+            hline(x + 8, x + cw - 8, lineY, COL.gray, 0.5); yy = lineY - 2;
+            txtC(cx, yy - 10, 'Fdo.: ' + (c.nombre || '……………………………'), 'R', 10); yy -= 13;
+            if (c.nota) for (const l of wrap(c.nota, 'R', 8.5, cw - 10)) { txtC(cx, yy - 8, l, 'R', 8.5, COL.gray); yy -= 10; }
+            if (c.fecha) txtC(cx, yy - 8, c.fecha, 'I', 7.5, COL.gray);
+          });
+          y -= h;
+        }
+      }
+      else if (b.type === 'line') { y -= (b.before ?? 240) / 20; for (const l of wrap(b.text, b.i ? 'I' : 'R', 10.5, CW)) { need(14); txt(ML, y - 10, l, b.i ? 'I' : 'R', 10.5); y -= 14; } y -= 4; }
+    }
+
+    // Cabecera y pie en todas las páginas
+    const H = d.header || {}; const logoName = H.logo ? addImg(H.logo) : null; const N = pages.length;
+    pages.forEach((p, i) => {
+      pg = p;
+      if (logoName) { const [w, h] = fit(H.logo.w, H.logo.h, 5.5 * CM, 1.7 * CM); drawImg(logoName, ML, PH - 36 - h, w, h); }
+      (H.lines || []).filter(Boolean).forEach((l, k) => txt(PW - MR - W(l, k ? 'R' : 'B', 8.5), PH - 44 - k * 11, l, k ? 'R' : 'B', 8.5, k ? COL.gray : COL.pri));
+      hline(ML, PW - MR, MB - 26, COL.gray, 0.5);
+      txt(ML, MB - 38, d.footer || '', 'R', 8, COL.gray);
+      const pgTxt = `Página ${i + 1} de ${N}`; txt(PW - MR - W(pgTxt, 'R', 8), MB - 38, pgTxt, 'R', 8, COL.gray);
+    });
+
+    // ---- Serialización
+    const objs = []; const add = s => { objs.push(s); return objs.length; };
+    const ref = n => `${n} 0 R`;
+    const catalogN = add(null), pagesN = add(null);
+    const f1 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    const f2 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+    const f3 = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>');
+    const imgN = images.map(im => add({ dict: `<< /Type /XObject /Subtype /Image /Width ${im.pw || im.w} /Height ${im.ph || im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, data: im.bytes }));
+    const xo = images.map((_, i) => `/Im${i + 1} ${ref(imgN[i])}`).join(' ');
+    const res = `<< /Font << /F1 ${ref(f1)} /F2 ${ref(f2)} /F3 ${ref(f3)} >> /XObject << ${xo} >> /ProcSet [/PDF /Text /ImageC] >>`;
+    const pageNs = [];
+    let sigField = null, sigN = null;
+    if (opts.sign) {
+      sigN = add('SIGPLACEHOLDER');
+      sigField = add(null);
+    }
+    for (let i = 0; i < pages.length; i++) {
+      const p = pages[i];
+      const cs = add({ dict: '<< /Filter /FlateDecode', data: await deflate(te.encode(p.ops.join('\n'))) });
+      const annots = p.links.map(l => add(`<< /Type /Annot /Subtype /Link /Rect [${n2(l.x)} ${n2(l.y)} ${n2(l.x + l.w)} ${n2(l.y + l.h)}] /Border [0 0 0] /A << /S /URI /URI ${str(l.url)} >> >>`));
+      if (sigField && i === pages.length - 1) annots.push(sigField);
+      const pn = add(`<< /Type /Page /Parent ${ref(pagesN)} /MediaBox [0 0 ${PW} ${PH}] /Resources ${res} /Contents ${ref(cs)}${annots.length ? ` /Annots [${annots.map(ref).join(' ')}]` : ''} >>`);
+      pageNs.push(pn);
+    }
+    objs[pagesN - 1] = `<< /Type /Pages /Kids [${pageNs.map(ref).join(' ')}] /Count ${pageNs.length} >>`;
+    objs[catalogN - 1] = `<< /Type /Catalog /Pages ${ref(pagesN)}${sigField ? ` /AcroForm << /Fields [${ref(sigField)}] /SigFlags 3 >>` : ''} /Lang (es-ES) >>`;
+    const now = new Date();
+    const infoN = add(`<< /Title ${str(d.subtitle || d.title || '')} /Author ${str(d.author || '')} /Creator (Visitas de Campo) /Producer (Visitas de Campo) /CreationDate (${pdfDate(now)}) /ModDate (${pdfDate(now)}) >>`);
+    const SIGLEN = 24000; // bytes reservados para la firma CMS
+    if (opts.sign) {
+      objs[sigField - 1] = `<< /Type /Annot /Subtype /Widget /FT /Sig /T (Firma_funcionario) /Rect [0 0 0 0] /F 132 /V ${ref(sigN)} /P ${ref(pageNs[pageNs.length - 1])} >>`;
+      objs[sigN - 1] = `<< /Type /Sig /Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached /ByteRange [0 ********** ********** **********] /Contents <${'0'.repeat(SIGLEN * 2)}> /M (${pdfDate(now)}) /Name ${str(opts.sign.name || '')} /Reason ${str(opts.sign.reason || '')} /Location ${str(opts.sign.location || '')} >>`;
+    }
+    const parts = [te.encode('%PDF-1.7\n'), new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A])];
+    const offs = []; let pos = parts.reduce((s, p) => s + p.length, 0);
+    objs.forEach((o, i) => {
+      offs.push(pos);
+      let chunk;
+      if (typeof o === 'string') chunk = te.encode(`${i + 1} 0 obj\n${o}\nendobj\n`);
+      else chunk = cat(te.encode(`${i + 1} 0 obj\n${o.dict} /Length ${o.data.length} >>\nstream\n`), o.data, te.encode('\nendstream\nendobj\n'));
+      parts.push(chunk); pos += chunk.length;
+    });
+    const idHex = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
+    let xref = `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+    xref += `trailer\n<< /Size ${objs.length + 1} /Root ${ref(catalogN)} /Info ${ref(infoN)} /ID [<${idHex}> <${idHex}>] >>\nstartxref\n${pos}\n%%EOF\n`;
+    parts.push(te.encode(xref));
+    const buf = cat(...parts);
+    if (!opts.sign) return buf;
+
+    // ---- Firma PAdES: ByteRange + CMS desacoplado
+    const br = find(buf, '/ByteRange [0 '), cs = find(buf, '/Contents <', br) + 10, ce = cs + SIGLEN * 2 + 2;
+    const range = [0, cs, ce, buf.length - ce];
+    const brStart = br + '/ByteRange ['.length, brText = `${range.join(' ')}]`, brLen = '0 ********** ********** **********]'.length;
+    buf.set(te.encode(brText.padEnd(brLen, ' ')), brStart);
+    const signed = cat(buf.subarray(0, cs), buf.subarray(ce));
+    const cms = await opts.sign.cms(signed);
+    if (cms.length > SIGLEN) throw new Error('La firma no cabe en el espacio reservado');
+    const hex = [...cms].map(x => x.toString(16).padStart(2, '0')).join('');
+    buf.set(te.encode(hex), cs + 1);
+    return buf;
+  }
+  return { build };
 })();
 
 
@@ -1979,15 +2245,16 @@ async function buildDoc(opt={}){
   if(opt.cert){
     const c=opt.cert;
     blocks.push({type:'h',text:'Firma electrónica'},
-      {type:'p',text:`Documento firmado electrónicamente por ${c.name}${c.nif?' (NIF '+c.nif+')':''} mediante certificado electrónico${c.issuer?' emitido por '+c.issuer:''}, el ${fmtDT(opt.when).slice(0,16)}. Formato de firma: CAdES (archivo .csig adjunto), verificable en https://valide.redsara.es o con AutoFirma.`});
+      {type:'p',text:`Documento firmado electrónicamente por ${c.name}${c.nif?' (NIF '+c.nif+')':''} mediante certificado electrónico${c.issuer?' emitido por '+c.issuer:''}, el ${fmtDT(opt.when).slice(0,16)}. `+(opt.pdf?'La firma (formato PAdES) está incrustada en este PDF y puede verificarse en https://valide.redsara.es, con AutoFirma o con Adobe Acrobat Reader.':'Formato de firma: CAdES (archivo .csig adjunto), verificable en https://valide.redsara.es o con AutoFirma.')});
   }
 
   const logo = CFG.logo ? {bytes:new Uint8Array(await CFG.logo.blob.arrayBuffer()),w:CFG.logo.w,h:CFG.logo.h,ext:'png'} : null;
-  return buildDocx({
+  const model={
     header:{logo,lines:[CFG.org1,CFG.org2,CFG.org3]},
     title:m.titulo, subtitle:(v.asunto||'').trim(),
     meta:`Documento generado el ${fmtDT(Date.now()).slice(0,16)}${myIdent()?' por '+myIdent():''}`,
-    footer:`${m.titulo}${v.expediente?' · Exp. '+v.expediente:''}`, author:CFG.nombre, blocks });
+    footer:`${m.titulo}${v.expediente?' · Exp. '+v.expediente:''}`, author:CFG.nombre, blocks };
+  return opt.model ? model : buildDocx(model);
 }
 async function makeDocBlob(opt){ const parts=await buildDoc(opt); await persistNow(); return new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}); }
 function docName(){ return `${M().corto}_${slug(S.v.asunto||S.v.paraje||S.v.municipio)||'visita'}_${S.v.fecha||today()}`.replace('__','_'); }
@@ -2012,17 +2279,60 @@ async function genSigned(pwd){
 }
 $('btnDoc').onclick=async()=>{
   if(S.tipo==='denuncia' && !(S.v.denDni||'').trim() && !$('btnDoc').dataset.ok){ $('btnDoc').dataset.ok='1'; setTimeout(()=>delete $('btnDoc').dataset.ok,6000); toast('Falta el DNI/NIE del denunciado/a. Pulsa otra vez para generar igualmente.',5000); document.getElementById('v_denDni')?.focus(); return; }
-  if(CFG.cert){
-    const i=CFG.cert.info;
-    $('pwdTitle').textContent='Firmar con certificado'; $('pwdErr').textContent=''; $('pwdAlt').hidden=false;
-    $('pwdInfo').textContent=`${i.name}${i.nif?' · NIF '+i.nif:''}${i.notAfter?' · válido hasta '+new Date(i.notAfter).toLocaleDateString('es-ES'):''}`;
-    PWD_MODE='sign'; $('pwdSheet').classList.add('on'); setTimeout(()=>$('pwdIn').focus(),50); return;
-  }
-  genUnsigned();
+  openGen();
 };
+function genFmt(){ return document.querySelector('input[name=gfmt]:checked').value; }
+function updGen(){
+  const pdf=genFmt()==='pdf', c=CFG.cert;
+  $('genSignBox').hidden=!(pdf&&c); $('genPwdBox').hidden=!$('genSign').checked;
+  $('genNoCert').textContent = pdf&&!c ? 'Sin certificado cargado: el PDF saldrá sin firma digital. Puedes cargarlo en ⚙️ → Mis datos.' : '';
+  if(c){ const i=c.info; $('genCertInfo').textContent=`${i.name}${i.nif?' · NIF '+i.nif:''}${i.notAfter?' · válido hasta '+new Date(i.notAfter).toLocaleDateString('es-ES'):''}`; }
+  $('genOk').textContent = pdf ? (c&&$('genSign').checked?'Firmar y generar PDF':'Generar PDF') : 'Generar Word';
+}
+function openGen(){
+  const f=CFG.lastFmt||'pdf'; document.querySelector(`input[name=gfmt][value=${f}]`).checked=true;
+  $('genErr').textContent=''; $('genPwd').value=''; updGen(); $('genSheet').classList.add('on');
+  if(genFmt()==='pdf'&&CFG.cert&&$('genSign').checked) setTimeout(()=>$('genPwd').focus(),60);
+}
+document.querySelectorAll('input[name=gfmt]').forEach(r=>r.onchange=()=>{ CFG.lastFmt=genFmt(); persistCfg(); updGen(); });
+$('genSign').onchange=updGen;
+$('genCancel').onclick=()=>{ $('genSheet').classList.remove('on'); $('genPwd').value=''; };
+$('genForm').onsubmit=async e=>{
+  e.preventDefault(); $('genErr').textContent='';
+  if(genFmt()==='docx'){ $('genSheet').classList.remove('on'); return genUnsigned(); }
+  const signIt=!!CFG.cert && $('genSign').checked, pw=$('genPwd').value;
+  if(signIt && !pw){ $('genErr').textContent='Escribe la contraseña del certificado'; return; }
+  if(signIt){ try{ busy(true,'Comprobando certificado…'); await PKI.inspect(await CFG.cert.blob.arrayBuffer(),pw); }catch(err){ busy(false); $('genErr').textContent=PKI.errMsg(err); $('genPwd').value=''; return; } }
+  await genPdf(signIt?pw:null);
+};
+async function toJpeg(bytes,max){
+  const bmp=await createImageBitmap(new Blob([bytes])); const k=Math.min(1,(max||2400)/Math.max(bmp.width,bmp.height));
+  const c=document.createElement('canvas'); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+  const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(bmp,0,0,c.width,c.height);
+  const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.9)); return {bytes:new Uint8Array(await b.arrayBuffer()),w:c.width,h:c.height};
+}
+async function prepPdf(m){
+  if(m.header.logo) m.header.logo=await toJpeg(m.header.logo.bytes,1200);
+  for(const b of m.blocks){
+    if(b.type==='img' && b.ext!=='jpeg'){ const j=await toJpeg(b.bytes); Object.assign(b,j); }
+    if(b.type==='firmas') for(const c of b.cols) if(c&&c.img) c.img=await toJpeg(c.img.bytes,900);
+  }
+  return m;
+}
+async function genPdf(pw){
+  busy(true, pw?'Generando y firmando PDF…':'Generando PDF…');
+  try{
+    const when=new Date(), info=pw?CFG.cert.info:null;
+    const model=await prepPdf(await buildDoc({model:true,pdf:true,cert:info,when}));
+    await persistNow();
+    const opts = pw ? { sign:{ cms: async bytes=>PKI.signDetached(await CFG.cert.blob.arrayBuffer(),pw,bytes), name:info.name, reason:`${M().titulo} — firma del funcionario actuante`, location:S.v.municipio||'' } } : {};
+    const bytes=await PDF.build(model,opts);
+    busy(false); $('genSheet').classList.remove('on'); $('genPwd').value='';
+    await deliver(new Blob([bytes],{type:'application/pdf'}), docName()+(pw?'_firmado':'')+'.pdf', pw?'PDF firmado':'PDF');
+  }catch(e){ busy(false); console.error(e); $('genErr').textContent=PKI.errMsg(e); }
+}
 let PWD_MODE='sign', PENDING_CERT=null;
 $('pwdForm').onsubmit=async e=>{ e.preventDefault(); const pw=$('pwdIn').value; if(!pw){ $('pwdErr').textContent='Escribe la contraseña'; return; }
-  if(PWD_MODE==='sign') return genSigned(pw);
   try{ busy(true,'Leyendo certificado…'); const info=await PKI.inspect(await PENDING_CERT.arrayBuffer(),pw); busy(false);
     if(info.notAfter && new Date(info.notAfter)<new Date()){ $('pwdErr').textContent='El certificado está caducado'; return; }
     CFG.cert={blob:PENDING_CERT,info,name:PENDING_CERT.name}; PENDING_CERT=null; persistCfg(); fillCert(); $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; toast('Certificado cargado ✔');
