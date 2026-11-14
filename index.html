@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#002855">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Visitas de Campo</title>
+<style>
+:root{--bg:#f2f4f7;--card:#fff;--ink:#1a2230;--mute:#667085;--line:#dfe3ea;--pri:#002855;--pri2:#1d4a80;--gray:#777779;--acc:#d9822b;--ok:#2f7d4f;--red:#c0392b;--r:14px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 12px 0}
+.top{display:flex;align-items:center;gap:8px;padding:0 2px 10px}
+.top h1{font-size:16px;margin:0;flex:1;letter-spacing:.2px;font-weight:650}
+.chip{font-size:12px;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.14);white-space:nowrap}
+.chip.ok{background:#2f7d4f}.chip.rec{background:var(--red);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.6}}
+.hb{background:rgba(255,255,255,.14);border:0;color:#fff;width:34px;height:34px;border-radius:10px;font-size:17px;cursor:pointer}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:0 0 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:99px;padding:6px 12px;font:500 13.5px system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.tab.on{background:#fff;color:var(--pri);border-color:#fff;font-weight:650}
+main{max-width:720px;margin:0 auto;padding:14px 12px calc(110px + env(safe-area-inset-bottom))}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+section h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--pri);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+section h2 .n{background:var(--pri);color:#fff;border-radius:99px;font-size:11px;padding:1px 8px;letter-spacing:0}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.grid .full{grid-column:1/-1}
+.grid>div>label{margin-top:10px}
+input,textarea,select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#f8f9fb;border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#667085 50%),linear-gradient(135deg,#667085 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+input:focus,textarea:focus,select:focus{border-color:var(--pri2);background:#fff}
+textarea{resize:vertical;min-height:84px}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);margin:12px 0 2px}
+.chk input{width:20px;height:20px;accent-color:var(--pri);flex:none}
+.vz{position:relative}
+.vz textarea,.vz input{padding-right:48px}
+.mic{display:none;position:absolute;right:6px;top:6px;width:36px;height:36px;border:0;border-radius:10px;background:#e8edf5;color:var(--pri);font-size:17px;cursor:pointer}
+body.voz .mic{display:grid;place-items:center}
+.mic.on{background:var(--red);color:#fff;animation:pulse 1.2s infinite}
+.hint{font-size:12.5px;color:var(--mute);margin-top:6px}
+.empty{text-align:center;color:var(--mute);padding:18px 8px;font-size:14px}
+.photo{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:12px;background:#f8f9fb}
+.photo .img{position:relative;background:#1a2230}
+.photo img{display:block;width:100%;max-height:340px;object-fit:contain}
+.photo .num{position:absolute;top:8px;left:8px;background:var(--pri);color:#fff;font-weight:700;font-size:13px;border-radius:8px;padding:3px 9px}
+.photo .tools{position:absolute;top:6px;right:6px;display:flex;gap:6px}
+.ib{border:0;background:rgba(0,0,0,.55);color:#fff;width:36px;height:36px;border-radius:10px;font-size:16px;display:grid;place-items:center;cursor:pointer}
+.ib:disabled{opacity:.3}
+.ib.armed{background:var(--red);width:auto;padding:0 10px;font-size:13px}
+.photo .body{padding:10px 12px 12px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{font-size:12px;border-radius:99px;padding:3px 9px;background:#e9ecf2;color:#475467}
+.tag.gps{background:#dcefe3;color:#1f5e3b}.tag.nogps{background:#fbe6d4;color:#8a4a12}
+details{margin-top:8px}summary{font-size:13px;color:var(--pri2);cursor:pointer;padding:4px 0}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(242,244,247,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.bar .in{max-width:720px;width:100%;display:flex;gap:8px}
+.btn{flex:1;border:0;border-radius:12px;padding:14px 8px;font:600 15px system-ui,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn.cam{background:var(--acc);color:#fff}.btn.gal{background:#fff;color:var(--pri);border:1px solid var(--line);flex:.45}
+.btn.doc{background:var(--pri);color:#fff}
+.btn.sm{flex:none;padding:9px 12px;font-size:13.5px;background:#fff;border:1px solid var(--line);color:var(--ink);border-radius:10px}
+.btn.sm.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+.btn.sm.red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.sm.armed{background:var(--red);color:#fff;border-color:var(--red)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#f3f5f9;border-radius:10px;padding:8px 10px}
+.stat b{display:block;font-size:17px;color:var(--pri)}.stat span{font-size:11.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}
+#sketch{width:100%;aspect-ratio:16/10;border-radius:10px;border:1px solid var(--line);margin-top:10px;display:none;background:#fff}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#1a2230;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.busy{position:fixed;inset:0;background:rgba(10,20,35,.55);display:none;place-items:center;z-index:30;color:#fff;font-weight:600}
+.busy.on{display:grid}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:4px}
+.foot small{color:var(--mute);font-size:12px}
+#vozBar{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:15;background:var(--pri);color:#fff;border-radius:14px;padding:10px 12px;display:none;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:696px;margin:0 auto}
+#vozBar.on{display:flex}
+#vozBar .dot{width:10px;height:10px;border-radius:50%;background:#ff5a4e;animation:pulse 1s infinite;flex:none}
+#vozTxt{flex:1;font-size:14px;opacity:.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#vozBar button{background:#fff;color:var(--pri);border:0;border-radius:8px;padding:6px 12px;font-weight:650;cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:25;background:rgba(10,20,35,.45);display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.sheet .pan{background:#fff;width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 4px;font-size:17px;color:var(--pri)}
+.logoPrev{display:flex;align-items:center;gap:12px;margin-top:6px}
+.logoPrev img{max-height:52px;max-width:180px;border:1px solid var(--line);border-radius:8px;padding:4px;background:#fff}
+.mlist{margin-top:8px}.mi{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:6px}.mi div{flex:1;min-width:0}.mi b{display:block;font-size:14px;font-weight:600}.mi small{color:var(--mute);font-size:12px}
+.box{border:1px solid var(--line);border-radius:12px;padding:6px 12px 12px;margin-top:10px}.box summary{font-weight:600;font-size:14px;color:var(--pri)}
+.prog{height:8px;background:#e6eaf0;border-radius:99px;overflow:hidden;margin-top:10px}.prog div{height:100%;background:var(--pri);transition:width .3s}
+.btn:disabled{opacity:.45}
+.sigcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:#f8f9fb}
+.sighead{display:flex;align-items:center;gap:8px}.sighead div{flex:1;min-width:0}.sighead b{display:block;font-size:14.5px}.sighead small{color:var(--mute);font-size:12.5px}
+.sigimg{display:block;max-height:70px;max-width:70%;margin:8px auto 2px;background:#fff;border-radius:6px}
+.sigst{font-size:12px;color:var(--ok);text-align:center;margin-top:4px}.sigst.no{color:var(--mute);text-align:left}
+.sheet.sig{align-items:center;z-index:28}.sigpan{border-radius:18px;max-width:900px;width:calc(100% - 16px)}
+.sigbox{position:relative;margin:10px 0 6px;border:2px dashed #b9c3d3;border-radius:12px;background:#fff;height:min(46vh,340px)}
+#sigCv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair;border-radius:12px}
+.sigline{position:absolute;left:8%;right:8%;bottom:26%;border-bottom:1.5px solid #c9d1de;pointer-events:none}
+.sigx{position:absolute;left:8%;bottom:calc(26% + 4px);color:#aab4c3;font-size:18px;pointer-events:none}
+@media (orientation:landscape) and (max-height:500px){.sigbox{height:58vh}.sigpan{padding-top:8px}}
+.note{background:#eef3fa;border-radius:10px;padding:10px 12px;font-size:13px;color:#344054;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1 id="hTitle">Visita de campo</h1>
+    <span id="gpsChip" class="chip">GPS…</span>
+    <button class="hb" id="btnCfg" aria-label="Configuración">⚙️</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<main>
+  <div id="form"></div>
+
+  <section id="secTrack">
+    <h2>Recorrido (track)</h2>
+    <div class="stats">
+      <div class="stat"><b id="tDist">0 m</b><span>Distancia</span></div>
+      <div class="stat"><b id="tDur">—</b><span>Tiempo</span></div>
+      <div class="stat"><b id="tPts">0</b><span>Puntos</span></div>
+    </div>
+    <canvas id="sketch" width="1200" height="750"></canvas>
+    <div class="btns" id="trackBtns"></div>
+    <div class="hint" id="trackHint"></div>
+    <input type="file" id="inTrack" accept=".gpx,.kml,.kmz,application/gpx+xml,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz" hidden>
+  </section>
+
+  <section>
+    <h2>Fotografías <span class="n" id="nFotos">0</span></h2>
+    <div id="photos"></div>
+    <label class="chk"><input type="checkbox" id="f_stamp" checked> Sellar fecha, hora y coordenadas sobre cada foto</label>
+  </section>
+
+  <section id="secFirmas">
+    <h2>Firmas</h2>
+    <div class="hint" style="margin:-4px 0 6px">Cada firmante firma con el dedo en la pantalla. Las firmas se incrustan en el Word.</div>
+    <div id="firmasList"></div>
+    <div class="btns"><button class="btn sm pri" id="btnAddSig" type="button">＋ Añadir acompañante</button><button class="btn sm" id="btnAddOther" type="button">＋ Otro firmante (testigo, representante…)</button></div>
+  </section>
+
+  <div class="foot">
+    <small id="saved">Borrador guardado en este dispositivo</small>
+    <button class="btn sm" id="btnNew">Nueva visita</button>
+  </div>
+</main>
+
+<div class="bar"><div class="in">
+  <button class="btn cam" id="btnCam">📷 Foto</button>
+  <button class="btn gal" id="btnGal" aria-label="Añadir desde galería">🖼️</button>
+  <button class="btn doc" id="btnDoc">📄 Generar Word</button>
+</div></div>
+<input type="file" id="inCam" accept="image/*" capture="environment" hidden>
+<input type="file" id="inGal" accept="image/*" multiple hidden>
+
+<div id="vozBar"><span class="dot"></span><span id="vozTxt">Escuchando…</span><button id="vozStop">Parar</button></div>
+
+<div class="sheet" id="cfgSheet"><div class="pan">
+  <h3>Membrete y técnico</h3>
+  <div class="hint">Se guarda en este dispositivo y se aplica a todos los documentos.</div>
+  <label>Logotipo del membrete</label>
+  <div class="logoPrev"><img id="logoImg" alt="" hidden><button class="btn sm" id="btnLogo">Cargar logo…</button><button class="btn sm" id="btnLogoDel" hidden>Quitar</button></div>
+  <input type="file" id="inLogo" accept="image/*" hidden>
+  <div class="hint">Usa el archivo oficial del logotipo (PNG o JPG). Se coloca arriba a la izquierda.</div>
+  <label for="c_org1">Organismo (línea 1)</label><input id="c_org1" data-c="org1" placeholder="Junta de Comunidades de Castilla-La Mancha">
+  <label for="c_org2">Consejería / Dirección General (línea 2)</label><input id="c_org2" data-c="org2" placeholder="Consejería de …">
+  <label for="c_org3">Delegación / Servicio (línea 3)</label><input id="c_org3" data-c="org3" placeholder="Delegación Provincial de …">
+  <h3 style="margin-top:20px">Mis datos</h3>
+  <div class="hint">Se aplican a todos los documentos. Con tu firma guardada, en cada visita solo firman los acompañantes y demás intervinientes.</div>
+  <label for="c_nom">Nombre y apellidos</label><input id="c_nom" data-c="nombre" autocomplete="name">
+  <label>Certificado digital (.p12 / .pfx)</label>
+  <div id="certBox" class="hint"></div>
+  <div class="btns" style="margin-top:6px"><button class="btn sm pri" id="btnCert" type="button">🔐 Cargar certificado</button><button class="btn sm" id="btnCertDel" type="button" hidden>Quitar</button></div>
+  <input type="file" id="inCert" accept=".p12,.pfx,application/x-pkcs12" hidden>
+  <label class="chk"><input type="checkbox" id="c_fe"> Incluir diligencia de fe pública sobre las firmas recogidas en mi presencia</label>
+  <label>Tu firma guardada</label>
+  <div class="logoPrev"><img id="mySigImg" alt="Firma" hidden style="background:#fff"><button class="btn sm" id="btnMySig" type="button">✍️ Firmar</button><button class="btn sm" id="btnMySigDel" type="button" hidden>Quitar</button></div>
+  <div class="grid">
+    <div><label for="c_cargo">Cargo</label><input id="c_cargo" data-c="cargo" placeholder="Agente Medioambiental"></div>
+    <div><label for="c_tip">NIP / nº de identificación</label><input id="c_tip" data-c="tip" inputmode="numeric"></div>
+    <div class="full"><label for="c_idm">Identificarme en los documentos con</label><select id="c_idm" data-c="idMode"><option value="ambos">Nombre y NIP</option><option value="nip">Solo NIP (agentes)</option><option value="nombre">Solo nombre</option></select></div>
+  </div>
+  <h3 style="margin-top:22px">Mapas sin conexión</h3>
+  <div class="hint">Fondo del croquis y mapa de la app cuando no hay cobertura. <span id="mapUse"></span></div>
+  <div id="mapList" class="mlist"></div>
+  <details class="box" open><summary>🛰️ Descargar zona de ortofoto PNOA</summary>
+    <div class="hint" id="zoneNote" hidden>Dentro de Claude no se puede conectar con el IGN: la descarga funciona en la app publicada en vuestra web.</div>
+    <label for="z_name">Nombre de la zona</label><input id="z_name" placeholder="Ej.: Arroyo de la Fresneda">
+    <label for="z_center">Centro (lat, lon o X Y UTM 30)</label><input id="z_center" inputmode="decimal" placeholder="39.8628, -4.0273">
+    <div class="btns" style="margin-top:6px"><button class="btn sm" id="z_here" type="button">📍 Mi posición</button><button class="btn sm" id="z_visit" type="button">Visita actual</button></div>
+    <div class="grid">
+      <div><label for="z_r">Radio</label><select id="z_r"><option value="500">500 m</option><option value="1000" selected>1 km</option><option value="2000">2 km</option><option value="3000">3 km</option><option value="5000">5 km</option></select></div>
+      <div><label for="z_z">Detalle</label><select id="z_z"><option value="17">Medio (≈1 m)</option><option value="18" selected>Alto (≈0,5 m)</option><option value="19">Máximo (≈0,25 m)</option></select></div>
+    </div>
+    <div class="hint" id="z_est"></div>
+    <div class="btns"><button class="btn sm pri" id="btnZone" type="button">⬇️ Descargar zona</button></div>
+    <div id="dlBox"></div>
+  </details>
+  <details class="box"><summary>🖼️ Cargar ortofoto propia</summary>
+    <div class="hint">JPG/PNG con su archivo de georreferencia (.jgw/.pgw, selecciona los dos a la vez), KMZ con imagen superpuesta o GeoTIFF (LZW, Deflate o JPEG). El ECW no se puede leer: conviértelo antes con QGIS.</div>
+    <label for="m_crs">Sistema de las imágenes con .jgw/.pgw</label>
+    <select id="m_crs"><option value="30" selected>ETRS89 UTM huso 30</option><option value="29">ETRS89 UTM huso 29</option><option value="31">ETRS89 UTM huso 31</option><option value="geo">Geográficas (lat/lon)</option></select>
+    <div class="btns"><button class="btn sm pri" id="btnOwn" type="button">📂 Elegir archivos…</button></div>
+    <input type="file" id="inOwn" multiple accept=".jpg,.jpeg,.png,.jgw,.jpgw,.pgw,.pngw,.wld,.tif,.tiff,.tfw,.kmz" hidden>
+  </details>
+  <div class="note" id="pwaNote" hidden></div>
+  <div class="note">Identidad JCCM aplicada al Word: color corporativo Pantone 295 C (#002855), gris Cool Gray 9 C (#777779) y tipografía Arial Narrow.</div>
+  <div class="btns"><button class="btn sm pri" id="btnCfgOk">Hecho</button></div>
+</div></div>
+
+<div class="sheet sig" id="sigSheet"><div class="pan sigpan">
+  <h3 id="sigWho">Firma</h3><div class="hint" id="sigSub"></div>
+  <div class="sigbox"><canvas id="sigCv"></canvas><div class="sigline"></div><span class="sigx">✕</span></div>
+  <div class="hint" style="text-align:center">Firme con el dedo dentro del recuadro. Gire el móvil para tener más espacio.</div>
+  <div class="btns" style="justify-content:space-between"><button class="btn sm" id="sigClear" type="button">Borrar</button><span style="flex:1"></span><button class="btn sm" id="sigCancel" type="button">Cancelar</button><button class="btn sm pri" id="sigOk" type="button" disabled>Aceptar firma</button></div>
+</div></div>
+
+<div class="sheet sig" id="pwdSheet"><div class="pan sigpan" style="max-width:480px">
+  <h3 id="pwdTitle">Firmar con certificado</h3>
+  <div class="hint" id="pwdInfo"></div>
+  <form id="pwdForm" autocomplete="off"><label for="pwdIn">Contraseña del certificado</label><input type="password" id="pwdIn" autocomplete="off"><div class="hint" id="pwdErr" style="color:#c0392b"></div>
+  <div class="btns" style="justify-content:flex-end"><button class="btn sm" id="pwdAlt" type="button">Descargar sin firmar</button><button class="btn sm" id="pwdCancel" type="button">Cancelar</button><button class="btn sm pri" id="pwdOk" type="submit">Firmar</button></div></form>
+  <div class="hint">La contraseña no se guarda: se usa solo para esta firma.</div>
+</div></div>
+
+<div id="toast"></div>
+<div class="busy" id="busy"><div id="busyTxt">Generando…</div></div>
+
+<script>
+// ===== Lector EXIF mínimo: fecha original y GPS =====
+function parseExif(buf) {
+  try {
+    const v = new DataView(buf);
+    if (v.getUint16(0) !== 0xFFD8) return {};
+    let o = 2;
+    while (o < v.byteLength - 4) {
+      const m = v.getUint16(o), len = v.getUint16(o + 2);
+      if (m === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) return readTiff(v, o + 10);
+      if ((m & 0xFF00) !== 0xFF00 || m === 0xFFDA) break;
+      o += 2 + len;
+    }
+  } catch (e) { }
+  return {};
+}
+function readTiff(v, t) {
+  const out = {};
+  try {
+    const le = v.getUint16(t) === 0x4949;
+    const u16 = p => v.getUint16(p, le), u32 = p => v.getUint32(p, le);
+    const ifd = p => { const n = u16(p), tags = {}; for (let i = 0; i < n; i++) { const e = p + 2 + i * 12; tags[u16(e)] = { type: u16(e + 2), count: u32(e + 4), off: e + 8 }; } return tags; };
+    const ascii = tg => { const p = tg.count > 4 ? t + u32(tg.off) : tg.off; let s = ''; for (let i = 0; i < tg.count; i++) { const c = v.getUint8(p + i); if (!c) break; s += String.fromCharCode(c); } return s; };
+    const rats = tg => { const p = t + u32(tg.off), r = []; for (let i = 0; i < tg.count; i++) r.push(u32(p + i * 8) / u32(p + i * 8 + 4)); return r; };
+    const i0 = ifd(t + u32(t + 4));
+    if (i0[0x8769]) { const ex = ifd(t + u32(i0[0x8769].off)); const d = ex[0x9003] || ex[0x9004]; if (d) out.dt = ascii(d); }
+    if (!out.dt && i0[0x0132]) out.dt = ascii(i0[0x0132]);
+    if (i0[0x8825]) {
+      const g = ifd(t + u32(i0[0x8825].off));
+      if (g[2] && g[4]) {
+        const la = rats(g[2]), lo = rats(g[4]);
+        let lat = la[0] + (la[1] || 0) / 60 + (la[2] || 0) / 3600, lon = lo[0] + (lo[1] || 0) / 60 + (lo[2] || 0) / 3600;
+        if (g[1] && ascii(g[1]) === 'S') lat = -lat;
+        if (g[3] && ascii(g[3]) === 'W') lon = -lon;
+        if (isFinite(lat) && isFinite(lon) && !(lat === 0 && lon === 0)) { out.lat = lat; out.lon = lon; }
+      }
+    }
+    if (out.dt) {
+      const m = out.dt.match(/(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+      out.ts = m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime() : null;
+    }
+  } catch (e) { }
+  return out;
+}
+if (typeof module !== 'undefined') module.exports = { parseExif };
+
+// ===== Utilidades geográficas =====
+function toUTM(lat, lon, forceZone) {
+  const zone = forceZone || Math.floor((lon + 180) / 6) + 1;
+  const a = 6378137, f = 1 / 298.257222101, k0 = 0.9996; // GRS80 (ETRS89)
+  const e2 = f * (2 - f), ep2 = e2 / (1 - e2), R = Math.PI / 180;
+  const p = lat * R, l = lon * R, l0 = ((zone - 1) * 6 - 180 + 3) * R;
+  const N = a / Math.sqrt(1 - e2 * Math.sin(p) ** 2), T = Math.tan(p) ** 2, C = ep2 * Math.cos(p) ** 2, A = Math.cos(p) * (l - l0);
+  const M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 ** 3 / 256) * p - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 ** 3 / 1024) * Math.sin(2 * p) + (15 * e2 * e2 / 256 + 45 * e2 ** 3 / 1024) * Math.sin(4 * p) - (35 * e2 ** 3 / 3072) * Math.sin(6 * p));
+  const x = k0 * N * (A + (1 - T + C) * A ** 3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * A ** 5 / 120) + 500000;
+  let y = k0 * (M + N * Math.tan(p) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A ** 4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * A ** 6 / 720));
+  if (lat < 0) y += 1e7;
+  return { zone, x, y };
+}
+function hav(a, b) {
+  const R = 6371008.8, r = Math.PI / 180, dLa = (b[0] - a[0]) * r, dLo = (b[1] - a[1]) * r;
+  const h = Math.sin(dLa / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+// segmentos: array de arrays de puntos [lat, lon, t(ms)|null, ele|null]
+function trackStats(segs) {
+  let dist = 0, n = 0, t0 = null, t1 = null, moving = 0;
+  for (const s of segs) {
+    for (let i = 0; i < s.length; i++) {
+      n++;
+      if (i) { const d = hav(s[i - 1], s[i]); dist += d; if (s[i][2] && s[i - 1][2]) moving += s[i][2] - s[i - 1][2]; }
+      if (s[i][2]) { if (t0 == null || s[i][2] < t0) t0 = s[i][2]; if (t1 == null || s[i][2] > t1) t1 = s[i][2]; }
+    }
+  }
+  const all = segs.flat();
+  return { dist, n, t0, t1, dur: moving, start: all[0] || null, end: all[all.length - 1] || null };
+}
+function fmtDist(m) { return m >= 1000 ? (m / 1000).toFixed(2).replace('.', ',') + ' km' : Math.round(m) + ' m'; }
+function fmtDur(ms) { if (!ms) return '—'; const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h} h ${m} min` : `${m} min ${s % 60} s`; }
+
+// --- Importar GPX / KML (texto)
+function parseTrackText(text) {
+  const x = new DOMParser().parseFromString(text, 'application/xml');
+  if (x.getElementsByTagName('parsererror').length) throw new Error('Archivo no válido');
+  const segs = []; let name = '';
+  const nm = x.querySelector('trk > name, Document > name, Placemark > name, metadata > name'); if (nm) name = nm.textContent.trim();
+  // GPX
+  const trksegs = x.getElementsByTagName('trkseg');
+  for (const sg of trksegs) {
+    const pts = [...sg.getElementsByTagName('trkpt')].map(p => { const t = p.getElementsByTagName('time')[0], e = p.getElementsByTagName('ele')[0]; return [+p.getAttribute('lat'), +p.getAttribute('lon'), t ? Date.parse(t.textContent) || null : null, e ? +e.textContent : null]; });
+    if (pts.length) segs.push(pts);
+  }
+  if (!segs.length) { const r = [...x.getElementsByTagName('rtept')].map(p => [+p.getAttribute('lat'), +p.getAttribute('lon'), null, null]); if (r.length) segs.push(r); }
+  // KML gx:Track
+  if (!segs.length) {
+    for (const tr of x.getElementsByTagNameNS('*', 'Track')) {
+      const whens = [...tr.getElementsByTagName('when')].map(w => Date.parse(w.textContent) || null);
+      const pts = [...tr.getElementsByTagNameNS('*', 'coord')].map((c, i) => { const [lo, la, el] = c.textContent.trim().split(/\s+/).map(Number); return [la, lo, whens[i] || null, isNaN(el) ? null : el]; });
+      if (pts.length) segs.push(pts);
+    }
+  }
+  // KML LineString
+  if (!segs.length) {
+    for (const ls of x.getElementsByTagName('LineString')) {
+      const c = ls.getElementsByTagName('coordinates')[0]; if (!c) continue;
+      const pts = c.textContent.trim().split(/\s+/).map(t => { const [lo, la, el] = t.split(',').map(Number); return [la, lo, null, isNaN(el) ? null : el]; }).filter(p => isFinite(p[0]) && isFinite(p[1]));
+      if (pts.length) segs.push(pts);
+    }
+  }
+  const ok = segs.map(s => s.filter(p => isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180)).filter(s => s.length > 1);
+  if (!ok.length) throw new Error('No se ha encontrado ningún track en el archivo');
+  return { segs: ok, name };
+}
+// --- KMZ (zip): extrae el primer .kml
+async function kmzToText(buf) {
+  const v = new DataView(buf); let e = buf.byteLength - 22;
+  while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('KMZ no válido');
+  let p = v.getUint32(e + 16, true); const n = v.getUint16(e + 10, true);
+  for (let i = 0; i < n; i++) {
+    const method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), lo = v.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(new Uint8Array(buf, p + 46, nl));
+    if (/\.kml$/i.test(name)) {
+      const start = lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true);
+      const data = new Uint8Array(buf, start, csize);
+      if (method === 0) return new TextDecoder().decode(data);
+      const ds = new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw')));
+      return await ds.text();
+    }
+    p += 46 + nl + xl + cl;
+  }
+  throw new Error('El KMZ no contiene ningún KML');
+}
+
+// --- Exportar KML
+function buildKml({ name, desc, segs, photos }) {
+  const x = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const iso = t => new Date(t).toISOString();
+  let k = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">\n<Document>\n<name>${x(name)}</name>\n${desc ? `<description>${x(desc)}</description>\n` : ''}`;
+  k += `<Style id="track"><LineStyle><color>ff552800</color><width>4</width></LineStyle></Style>\n<Style id="foto"><IconStyle><color>ff2b82d9</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/camera.png</href></Icon></IconStyle></Style>\n`;
+  (segs || []).forEach((s, i) => {
+    const ts = s.filter(p => p[2]);
+    k += `<Placemark><name>${x(name)}${segs.length > 1 ? ` (tramo ${i + 1})` : ''}</name><styleUrl>#track</styleUrl>`;
+    if (ts.length) k += `<TimeSpan><begin>${iso(ts[0][2])}</begin><end>${iso(ts[ts.length - 1][2])}</end></TimeSpan>`;
+    k += `<LineString><tessellate>1</tessellate><coordinates>\n${s.map(p => `${p[1].toFixed(7)},${p[0].toFixed(7)}${p[3] != null ? ',' + p[3].toFixed(1) : ''}`).join('\n')}\n</coordinates></LineString></Placemark>\n`;
+  });
+  if (photos && photos.length) {
+    k += `<Folder><name>Fotografías</name>\n`;
+    photos.forEach(p => { k += `<Placemark><name>Foto ${p.n}</name><description>${x((p.when || '') + (p.comment ? ' — ' + p.comment : ''))}</description><styleUrl>#foto</styleUrl>${p.ts ? `<TimeStamp><when>${iso(p.ts)}</when></TimeStamp>` : ''}<Point><coordinates>${p.lon.toFixed(7)},${p.lat.toFixed(7)}</coordinates></Point></Placemark>\n`; });
+    k += `</Folder>\n`;
+  }
+  return k + `</Document>\n</kml>\n`;
+}
+
+function fromUTM(x, y, zone) {
+  const a = 6378137, f = 1 / 298.257222101, k0 = 0.9996, e2 = f * (2 - f), ep2 = e2 / (1 - e2), e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+  const mu = (y / k0) / (a * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 ** 3 / 256));
+  const p1 = mu + (3 * e1 / 2 - 27 * e1 ** 3 / 32) * Math.sin(2 * mu) + (21 * e1 * e1 / 16 - 55 * e1 ** 4 / 32) * Math.sin(4 * mu) + (151 * e1 ** 3 / 96) * Math.sin(6 * mu) + (1097 * e1 ** 4 / 512) * Math.sin(8 * mu);
+  const s1 = Math.sin(p1), c1 = Math.cos(p1), t1 = Math.tan(p1);
+  const N1 = a / Math.sqrt(1 - e2 * s1 * s1), T1 = t1 * t1, C1 = ep2 * c1 * c1, R1 = a * (1 - e2) / Math.pow(1 - e2 * s1 * s1, 1.5), D = (x - 500000) / (N1 * k0);
+  const lat = p1 - (N1 * t1 / R1) * (D * D / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * D ** 4 / 24 + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * D ** 6 / 720);
+  const lon = (D - (1 + 2 * T1 + C1) * D ** 3 / 6 + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * D ** 5 / 120) / c1;
+  return { lat: lat * 180 / Math.PI, lon: ((zone - 1) * 6 - 180 + 3) + lon * 180 / Math.PI };
+}
+// Acepta "lat, lon" (decimal, coma o punto) o "X Y" UTM (huso 30 por defecto, o "X Y 29")
+function parseCoords(str) {
+  const nums = String(str || '').replace(/[()°]/g, ' ').replace(/(\d),(\d)/g, '$1.$2').match(/-?\d+(?:\.\d+)?/g);
+  if (!nums || nums.length < 2) return null;
+  const a = +nums[0], b = +nums[1];
+  if (Math.abs(a) <= 90 && Math.abs(b) <= 180) return { lat: a, lon: b };
+  if (a > 100000 && a < 900000 && b > 3000000 && b < 5000000) { const z = nums[2] && +nums[2] >= 27 && +nums[2] <= 31 ? +nums[2] : 30; return fromUTM(a, b, z); }
+  return null;
+}
+// Web Mercator normalizado [0,1]
+const mercX = lon => (lon + 180) / 360;
+const mercY = lat => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2; };
+const EARTH_C = 40075016.686;
+if (typeof module !== 'undefined') module.exports = { toUTM, fromUTM, parseCoords, hav, trackStats, buildKml, fmtDist, fmtDur, mercX, mercY };
+
+
+// ===== Ortofotos propias: JPG/PNG + world file, KMZ (GroundOverlay) y GeoTIFF =====
+// Resultado común: { name, canvas, corners:{tl:[lat,lon], tr:[lat,lon], bl:[lat,lon]}, warn }
+
+// ---------- ZIP (lectura) ----------
+async function unzip(buf) {
+  const v = new DataView(buf); let e = buf.byteLength - 22;
+  while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('Archivo comprimido no válido');
+  let p = v.getUint32(e + 16, true); const n = v.getUint16(e + 10, true); const files = {};
+  for (let i = 0; i < n; i++) {
+    const method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true), xl = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), lo = v.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(new Uint8Array(buf, p + 46, nl));
+    files[name] = { method, csize, start: lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true) };
+    p += 46 + nl + xl + cl;
+  }
+  return {
+    names: Object.keys(files),
+    async get(name) {
+      const f = files[name] || files[Object.keys(files).find(k => k.toLowerCase() === name.toLowerCase())]; if (!f) return null;
+      const data = new Uint8Array(buf, f.start, f.csize);
+      if (f.method === 0) return data.slice();
+      return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    }
+  };
+}
+
+// ---------- Sistemas de referencia ----------
+// crs: {type:'utm', zone, datum} | {type:'geo'} | {type:'merc'}
+function crsFromEpsg(code) {
+  if (code >= 25828 && code <= 25832) return { type: 'utm', zone: code - 25800 };
+  if (code >= 32628 && code <= 32632) return { type: 'utm', zone: code - 32600 };
+  if (code >= 23028 && code <= 23032) return { type: 'utm', zone: code - 23000, ed50: true };
+  if (code === 4258 || code === 4326 || code === 4230) return { type: 'geo' };
+  if (code === 3857 || code === 900913 || code === 3785) return { type: 'merc' };
+  return null;
+}
+function toLatLon(crs, x, y) {
+  if (crs.type === 'geo') return [y, x];
+  if (crs.type === 'merc') { const lon = x / 6378137 * 180 / Math.PI; const lat = (2 * Math.atan(Math.exp(y / 6378137)) - Math.PI / 2) * 180 / Math.PI; return [lat, lon]; }
+  const r = fromUTM(x, y, crs.zone); return [r.lat, r.lon];
+}
+function cornersFromAffine(fn, w, h, crs) {
+  return { tl: toLatLon(crs, ...fn(0, 0)), tr: toLatLon(crs, ...fn(w, 0)), bl: toLatLon(crs, ...fn(0, h)) };
+}
+
+// ---------- Imagen genérica → canvas reducido ----------
+async function imageToCanvas(blob, maxPx) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const W = img.naturalWidth, H = img.naturalHeight, k = Math.min(1, maxPx / Math.max(W, H));
+    const c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+    return { canvas: c, W, H };
+  } finally { URL.revokeObjectURL(url); }
+}
+
+// ---------- World file (.jgw .pgw .tfw .wld) ----------
+function parseWorld(text) {
+  const n = text.trim().split(/\s+/).map(Number);
+  if (n.length < 6 || n.some(x => !isFinite(x))) throw new Error('Archivo de georreferencia no válido');
+  const [A, D, B, E, C, F] = n;
+  return (col, row) => [A * (col - 0.5) + B * (row - 0.5) + C, D * (col - 0.5) + E * (row - 0.5) + F];
+}
+
+// ---------- KMZ / KML con GroundOverlay ----------
+async function readGroundOverlay(kmlText, getFile) {
+  const x = new DOMParser().parseFromString(kmlText, 'application/xml');
+  const go = x.getElementsByTagName('GroundOverlay')[0]; if (!go) return null;
+  const href = go.getElementsByTagName('href')[0]?.textContent.trim();
+  const name = go.getElementsByTagName('name')[0]?.textContent.trim() || '';
+  let corners;
+  const quad = go.getElementsByTagNameNS('*', 'LatLonQuad')[0];
+  if (quad) {
+    const c = quad.getElementsByTagName('coordinates')[0].textContent.trim().split(/\s+/).map(t => t.split(',').map(Number)); // BL, BR, TR, TL
+    corners = { tl: [c[3][1], c[3][0]], tr: [c[2][1], c[2][0]], bl: [c[0][1], c[0][0]] };
+  } else {
+    const box = go.getElementsByTagName('LatLonBox')[0]; if (!box) throw new Error('El KML no tiene LatLonBox');
+    const g = t => +box.getElementsByTagName(t)[0]?.textContent || 0;
+    const N = g('north'), S = g('south'), E = g('east'), W = g('west'), rot = g('rotation') * Math.PI / 180;
+    const cy = (N + S) / 2, cx = (E + W) / 2, kx = Math.cos(cy * Math.PI / 180);
+    const R = (lon, lat) => { const dx = (lon - cx) * kx, dy = lat - cy; return [cy + dx * Math.sin(rot) + dy * Math.cos(rot), cx + (dx * Math.cos(rot) - dy * Math.sin(rot)) / kx]; };
+    corners = { tl: R(W, N), tr: R(E, N), bl: R(W, S) };
+  }
+  const data = href ? await getFile(href) : null;
+  if (!data) throw new Error('No se encuentra la imagen del KMZ (' + (href || '?') + ')');
+  return { name, blob: new Blob([data]), corners };
+}
+
+// ---------- GeoTIFF ----------
+function lzwDecode(src, expected) {
+  const out = new Uint8Array(expected); let op = 0;
+  const tab = new Array(4096); for (let i = 0; i < 256; i++) tab[i] = new Uint8Array([i]);
+  let next = 258, w = 9, bp = 0, prev = null; const total = src.length * 8;
+  while (bp + w <= total) {
+    const by = bp >> 3;
+    const c = ((((src[by] << 16) | ((src[by + 1] || 0) << 8) | (src[by + 2] || 0)) >>> (24 - (bp & 7) - w)) & ((1 << w) - 1));
+    bp += w;
+    if (c === 256) { next = 258; w = 9; prev = null; continue; }
+    if (c === 257) break;
+    let entry;
+    if (c < next && tab[c]) entry = tab[c];
+    else if (prev) { entry = new Uint8Array(prev.length + 1); entry.set(prev); entry[prev.length] = prev[0]; }
+    else break;
+    const n = Math.min(entry.length, expected - op); out.set(entry.subarray(0, n), op); op += n;
+    if (prev && next < 4096) { const ne = new Uint8Array(prev.length + 1); ne.set(prev); ne[prev.length] = entry[0]; tab[next++] = ne; }
+    prev = entry;
+    if (next >= (1 << w) - 1 && w < 12) w++;
+    if (op >= expected) break;
+  }
+  return out;
+}
+function packbits(src, expected) {
+  const out = new Uint8Array(expected); let i = 0, o = 0;
+  while (i < src.length && o < expected) { const n = (src[i] << 24) >> 24; i++; if (n >= 0) { out.set(src.subarray(i, i + n + 1), o); o += n + 1; i += n + 1; } else if (n !== -128) { out.fill(src[i], o, o + 1 - n); o += 1 - n; i++; } }
+  return out;
+}
+async function inflateZ(data) { return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer()); }
+
+async function readGeoTiff(buf, maxPx, onProgress) {
+  const v = new DataView(buf); const le = v.getUint16(0) === 0x4949;
+  const magic = v.getUint16(2, le);
+  if (magic === 43) throw new Error('BigTIFF no admitido: recorta la zona en QGIS y expórtala como GeoTIFF normal');
+  if (magic !== 42) throw new Error('No es un archivo TIFF');
+  const SZ = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 6: 1, 7: 1, 8: 2, 9: 4, 10: 8, 11: 4, 12: 8, 16: 8 };
+  const ifd = v.getUint32(4, le), n = v.getUint16(ifd, le), T = {};
+  for (let i = 0; i < n; i++) {
+    const e = ifd + 2 + i * 12, tag = v.getUint16(e, le), type = v.getUint16(e + 2, le), count = v.getUint32(e + 4, le);
+    const size = (SZ[type] || 1) * count, off = size > 4 ? v.getUint32(e + 8, le) : e + 8;
+    T[tag] = { type, count, off };
+  }
+  const vals = tag => {
+    const t = T[tag]; if (!t) return null; const out = [];
+    for (let i = 0; i < t.count; i++) {
+      const o = t.off + i * (SZ[t.type] || 1);
+      switch (t.type) { case 3: out.push(v.getUint16(o, le)); break; case 4: out.push(v.getUint32(o, le)); break; case 12: out.push(v.getFloat64(o, le)); break; case 11: out.push(v.getFloat32(o, le)); break; case 5: out.push(v.getUint32(o, le) / v.getUint32(o + 4, le)); break; case 16: out.push(Number(v.getBigUint64(o, le))); break; default: out.push(v.getUint8(o)); }
+    }
+    return out;
+  };
+  const one = (tag, d) => (vals(tag) || [d])[0];
+  const W = one(256), H = one(257), bps = one(258, 8), comp = one(259, 1), photo = one(262, 2), spp = one(277, 1), planar = one(284, 1), pred = one(317, 1);
+  if (planar !== 1 && spp > 1) throw new Error('GeoTIFF con planos separados no admitido');
+  if (bps !== 8 && bps !== 16) throw new Error(`Profundidad de ${bps} bits no admitida`);
+  const tiled = !!T[322];
+  const tw = tiled ? one(322) : W, th = tiled ? one(323) : one(278, H);
+  const offs = vals(tiled ? 324 : 273), cnts = vals(tiled ? 325 : 279);
+  const cmap = vals(320), jt = T[347] ? new Uint8Array(buf, T[347].off, T[347].count) : null;
+
+  // Georreferencia
+  const gk = vals(34735), geo = {};
+  if (gk) for (let i = 4; i < gk.length; i += 4) if (gk[i + 1] === 0) geo[gk[i]] = gk[i + 3];
+  let crs = null, warn = '';
+  if (geo[3072] && geo[3072] !== 32767) crs = crsFromEpsg(geo[3072]);
+  else if (geo[2048] && geo[2048] !== 32767) crs = crsFromEpsg(geo[2048]);
+  else if (geo[1024] === 2) crs = { type: 'geo' };
+  if (!crs) { crs = { type: 'utm', zone: 30 }; warn = 'Sistema de referencia no reconocido: se ha supuesto ETRS89 UTM 30.'; }
+  if (crs.ed50) warn = 'La imagen está en ED50: puede tener un desplazamiento de unos 100-200 m. Mejor reproyectarla a ETRS89.';
+  const mt = vals(34264), tie = vals(33922), sc = vals(33550);
+  let aff;
+  if (mt) aff = (i, j) => [mt[0] * i + mt[1] * j + mt[3], mt[4] * i + mt[5] * j + mt[7]];
+  else if (tie && sc) aff = (i, j) => [tie[3] + (i - tie[0]) * sc[0], tie[4] - (j - tie[1]) * sc[1]];
+  else throw new Error('El TIFF no tiene georreferencia (¿falta el .tfw?)');
+
+  // Decodificación por bloques, reduciendo al vuelo
+  const k = Math.min(1, maxPx / Math.max(W, H));
+  const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(W * k)); out.height = Math.max(1, Math.round(H * k));
+  const g = out.getContext('2d'); g.imageSmoothingQuality = 'high';
+  const tmp = document.createElement('canvas'), tg = tmp.getContext('2d');
+  const across = Math.ceil(W / tw);
+  const B = bps / 8;
+  for (let b = 0; b < offs.length; b++) {
+    const x0 = tiled ? (b % across) * tw : 0, y0 = tiled ? Math.floor(b / across) * th : b * th;
+    const bw = tw, bh = tiled ? th : Math.min(th, H - y0);
+    if (bh <= 0) continue;
+    const raw = new Uint8Array(buf, offs[b], cnts[b]);
+    if (comp === 7) {
+      let jpg = raw;
+      if (jt && jt.length > 4) { jpg = new Uint8Array(jt.length - 2 + raw.length - 2); jpg.set(jt.subarray(0, jt.length - 2)); jpg.set(raw.subarray(2), jt.length - 2); }
+      const bmp = await createImageBitmap(new Blob([jpg], { type: 'image/jpeg' }));
+      g.drawImage(bmp, x0 * k, y0 * k, bmp.width * k, bmp.height * k); bmp.close && bmp.close();
+    } else {
+      const need = bw * bh * spp * B;
+      let d;
+      if (comp === 1) d = raw;
+      else if (comp === 5) d = lzwDecode(raw, need);
+      else if (comp === 8 || comp === 32946) d = await inflateZ(raw);
+      else if (comp === 32773) d = packbits(raw, need);
+      else throw new Error(`Compresión TIFF ${comp} no admitida: expórtala con LZW, Deflate o JPEG`);
+      if (B === 2) { const d8 = new Uint8Array(d.length / 2); const dv = new DataView(d.buffer, d.byteOffset, d.byteLength); for (let i = 0; i < d8.length; i++) d8[i] = dv.getUint16(i * 2, le) >> 8; d = d8; }
+      if (pred === 2) { const rl = bw * spp; for (let r = 0; r < bh; r++) for (let i = spp; i < rl; i++) d[r * rl + i] = (d[r * rl + i] + d[r * rl + i - spp]) & 255; }
+      const id = new ImageData(bw, bh), px = id.data;
+      for (let i = 0, j = 0; i < bw * bh; i++, j += spp) {
+        let r, gg, bb, a = 255;
+        if (photo === 2) { r = d[j]; gg = d[j + 1]; bb = d[j + 2]; if (spp >= 4) a = d[j + 3]; }
+        else if (photo === 3 && cmap) { const c = d[j]; const nc = cmap.length / 3; r = cmap[c] >> 8; gg = cmap[nc + c] >> 8; bb = cmap[2 * nc + c] >> 8; }
+        else { const vv = photo === 0 ? 255 - d[j] : d[j]; r = gg = bb = vv; if (spp >= 2) a = d[j + 1]; }
+        px[i * 4] = r; px[i * 4 + 1] = gg; px[i * 4 + 2] = bb; px[i * 4 + 3] = a;
+      }
+      tmp.width = bw; tmp.height = bh; tg.putImageData(id, 0, 0);
+      g.drawImage(tmp, x0 * k, y0 * k, bw * k, bh * k);
+    }
+    if (onProgress && b % 20 === 0) onProgress(b / offs.length);
+  }
+  return { canvas: out, corners: cornersFromAffine(aff, W, H, crs), warn };
+}
+
+// ---------- Entrada principal ----------
+// files: FileList/array. worldCrs: crs para world files sin .prj
+async function loadOwnOrtho(files, worldCrs, onProgress) {
+  const arr = [...files], MAX = 6000;
+  const ext = f => (f.name.match(/\.([^.]+)$/) || [, ''])[1].toLowerCase();
+  const base = f => f.name.replace(/\.[^.]+$/, '').toLowerCase();
+  const results = [];
+  for (const f of arr) {
+    const e = ext(f);
+    if (e === 'kmz') {
+      const z = await unzip(await f.arrayBuffer());
+      const kmlName = z.names.find(n => /\.kml$/i.test(n)); if (!kmlName) throw new Error('El KMZ no contiene KML');
+      const go = await readGroundOverlay(new TextDecoder().decode(await z.get(kmlName)), h => z.get(h.replace(/^\.?\//, '')));
+      if (!go) throw new Error('El KMZ no contiene ninguna imagen superpuesta (GroundOverlay)');
+      const { canvas } = await imageToCanvas(go.blob, MAX);
+      results.push({ name: go.name || base(f), canvas, corners: go.corners, src: 'KMZ' });
+    } else if (e === 'tif' || e === 'tiff') {
+      const buf = await f.arrayBuffer();
+      const tfw = arr.find(o => base(o) === base(f) && /^(tfw|tifw|wld)$/.test(ext(o)));
+      try {
+        const r = await readGeoTiff(buf, MAX, onProgress);
+        results.push({ name: f.name.replace(/\.[^.]+$/, ''), canvas: r.canvas, corners: r.corners, warn: r.warn, src: 'GeoTIFF' });
+      } catch (err) {
+        if (!tfw || !/georreferencia/.test(err.message)) throw err;
+        throw new Error('TIFF con .tfw: conviértelo a JPG con su .jgw, o a GeoTIFF');
+      }
+    } else if (/^(jpe?g|png)$/.test(e)) {
+      const wf = arr.find(o => base(o) === base(f) && /^(jgw|jpgw|jpegw|pgw|pngw|wld)$/.test(ext(o)));
+      if (!wf) throw new Error(`Falta el archivo de georreferencia de ${f.name} (${e === 'png' ? '.pgw' : '.jgw'}). Selecciona los dos a la vez.`);
+      const fn = parseWorld(await wf.text());
+      const { canvas, W, H } = await imageToCanvas(f, MAX);
+      const [cx, cy] = fn(0, 0);
+      const crs = (Math.abs(cx) <= 180 && Math.abs(cy) <= 90) ? { type: 'geo' } : worldCrs;
+      results.push({ name: f.name.replace(/\.[^.]+$/, ''), canvas, corners: cornersFromAffine(fn, W, H, crs), src: 'Imagen georreferenciada' });
+    }
+  }
+  if (!results.length) throw new Error('Selecciona una imagen con su georreferencia (.jpg + .jgw), un .kmz o un GeoTIFF');
+  return results;
+}
+
+// ===== Generador DOCX (sin dependencias) =====
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+
+function zipStore(files) {
+  const enc = new TextEncoder(); const parts = [], cd = []; let off = 0;
+  const d = new Date();
+  const dt = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const dd = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const f of files) {
+    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const nm = enc.encode(f.name), crc = crc32(data), sz = data.length;
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint16(10, dt, true); h.setUint16(12, dd, true); h.setUint32(14, crc, true);
+    h.setUint32(18, sz, true); h.setUint32(22, sz, true); h.setUint16(26, nm.length, true);
+    parts.push(new Uint8Array(h.buffer), nm, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(12, dt, true); c.setUint16(14, dd, true); c.setUint32(16, crc, true);
+    c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cd.push(new Uint8Array(c.buffer), nm);
+    off += 30 + nm.length + sz;
+  }
+  const cdSize = cd.reduce((a, b) => a + b.length, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, cdSize, true); e.setUint32(16, off, true);
+  return [...parts, ...cd, new Uint8Array(e.buffer)];
+}
+
+const xe = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// Identidad (JCCM: Pantone 295 C #002855, Cool Gray 9 C #777779, Arial Narrow)
+const BRAND = { pri: '002855', gray: '777779', tint: 'E6EAF0', border: 'A7B4C6', font: 'Arial Narrow' };
+
+function run(text, o = {}) {
+  let rp = '';
+  if (o.style) rp += `<w:rStyle w:val="${o.style}"/>`;
+  if (o.b) rp += '<w:b/>'; if (o.i) rp += '<w:i/>'; if (o.caps) rp += '<w:caps/>';
+  if (o.color) rp += `<w:color w:val="${o.color}"/>`;
+  if (o.sz) rp += `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>`;
+  const lines = String(text ?? '').split('\n');
+  const body = lines.map((l, i) => (i ? '<w:br/>' : '') + `<w:t xml:space="preserve">${xe(l)}</w:t>`).join('');
+  return `<w:r>${rp ? `<w:rPr>${rp}</w:rPr>` : ''}${body}</w:r>`;
+}
+function para(content, o = {}) {
+  let pp = '';
+  if (o.style) pp += `<w:pStyle w:val="${o.style}"/>`;
+  if (o.keepNext) pp += '<w:keepNext/>';
+  if (o.keepLines) pp += '<w:keepLines/>';
+  if (o.border) pp += `<w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="${o.border}"/></w:pBdr>`;
+  if (o.before != null || o.after != null) pp += `<w:spacing w:before="${o.before ?? 0}" w:after="${o.after ?? 120}"/>`;
+  if (o.align) pp += `<w:jc w:val="${o.align}"/>`;
+  return `<w:p>${pp ? `<w:pPr>${pp}</w:pPr>` : ''}${content}</w:p>`;
+}
+function cell(content, w, o = {}) {
+  return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.fill ? `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>` : ''}${o.noBorder ? '<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders>' : ''}<w:vAlign w:val="${o.valign || 'center'}"/></w:tcPr>${content || '<w:p/>'}</w:tc>`;
+}
+function table(rows, widths, o = {}) {
+  const grid = widths.map(w => `<w:gridCol w:w="${w}"/>`).join('');
+  const style = o.plain ? '<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>' : '';
+  return `<w:tbl><w:tblPr>${o.plain ? '' : '<w:tblStyle w:val="Tabla"/>'}<w:tblW w:w="${widths.reduce((a, b) => a + b, 0)}" w:type="dxa"/>${style}<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${rows.map((r, i) => `<w:tr><w:trPr><w:cantSplit/>${i === 0 && o.header ? '<w:tblHeader/>' : ''}</w:trPr>${r}</w:tr>`).join('')}</w:tbl>`;
+}
+function imageXml(rid, id, cx, cy, name) {
+  return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="${xe(name)}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${xe(name)}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+}
+const CM = 360000;
+function fit(w, h, maxW, maxH) { let cx = maxW, cy = Math.round(maxW * h / w); if (cy > maxH) { cy = maxH; cx = Math.round(maxH * w / h); } return [cx, cy]; }
+
+/*
+ d = {
+  header: { logo:{bytes,w,h,ext}|null, lines:[str] },
+  title, subtitle, meta, footer, author,
+  blocks: [
+    {type:'h', text}
+    {type:'kv', rows:[[k,v]]}
+    {type:'p', text, empty}
+    {type:'img', bytes, w, h, caption, maxWcm, maxHcm}
+    {type:'photo', n, bytes, w, h, comment, metaLine}
+    {type:'table', head:[..], widths:[..], rows:[[cell|{text,url}]]}
+    {type:'firmas', cols:[{rol, nombre, nota}]}
+    {type:'line', text, align, i}
+  ]}
+*/
+function buildDocx(d) {
+  const TW = 9070; // ancho útil A4 con márgenes de 2,5 cm
+  const docRels = [], hdrRels = [], body = [], media = [];
+  let pid = 1, img = 0, lnk = 0;
+  docRels.push(`<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`);
+  docRels.push(`<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>`);
+  docRels.push(`<Relationship Id="rIdHdr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>`);
+  const addImg = (bytes, ext, rels) => { img++; const name = `img${img}.${ext || 'jpeg'}`; media.push({ name: `word/media/${name}`, data: bytes }); const rid = `rIdImg${img}`; rels.push(`<Relationship Id="${rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${name}"/>`); return rid; };
+  const addLink = url => { lnk++; const id = `rIdLnk${lnk}`; docRels.push(`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${xe(url)}" TargetMode="External"/>`); return id; };
+  const cellText = (v, sz) => (v && typeof v === 'object' && v.url) ? `<w:hyperlink r:id="${addLink(v.url)}" w:history="1">${run(v.text, { style: 'Hipervinculo', sz })}</w:hyperlink>` : run(v && typeof v === 'object' ? v.text : v, { sz });
+
+  // --- Cuerpo
+  body.push(para(run(d.title || 'INFORME'), { style: 'Title' }));
+  if (d.subtitle) body.push(para(run(d.subtitle, { b: true, sz: 24 }), { after: 40 }));
+  if (d.meta) body.push(para(run(d.meta, { i: true, color: BRAND.gray, sz: 17 }), { after: 200 }));
+
+  for (const b of d.blocks) {
+    if (b.type === 'h') body.push(para(run(b.text), { style: 'Heading1' }));
+    else if (b.type === 'kv') {
+      const rows = b.rows.filter(r => r[1] != null && String(r[1]).trim() !== '');
+      if (!rows.length) continue;
+      const W = [2900, TW - 2900];
+      body.push(table(rows.map(([k, v]) => cell(para(run(k, { b: true, color: BRAND.pri }), { after: 0 }), W[0], { fill: BRAND.tint }) + cell(para(cellText(v), { after: 0 }), W[1])), W));
+    }
+    else if (b.type === 'p') {
+      const t = (b.text || '').trim();
+      if (t) t.split(/\n+/).forEach(l => body.push(para(run(l.trim()), { after: 100, align: 'both' })));
+      else if (b.empty) body.push(para(run(b.empty, { i: true, color: BRAND.gray })));
+    }
+    else if (b.type === 'img') {
+      const rid = addImg(b.bytes, b.ext || 'png', docRels);
+      const [cx, cy] = fit(b.w, b.h, (b.maxWcm || 16) * CM, (b.maxHcm || 12) * CM);
+      body.push(para(imageXml(rid, pid++, cx, cy, b.caption || 'Imagen'), { align: 'center', keepNext: !!b.caption, before: 120, after: 60 }));
+      if (b.caption) body.push(para(run(b.caption, { color: BRAND.gray, sz: 18 }), { style: 'Pie', after: 200 }));
+    }
+    else if (b.type === 'photo') {
+      const rid = addImg(b.bytes, 'jpeg', docRels);
+      const [cx, cy] = fit(b.w, b.h, 15 * CM, 16.5 * CM);
+      body.push(para(imageXml(rid, pid++, cx, cy, `Foto ${b.n}`), { align: 'center', keepNext: true, before: 240, after: 60 }));
+      body.push(para(run(`Foto ${b.n}.`, { b: true, color: BRAND.pri }) + (b.comment ? run(' ' + b.comment.trim()) : ''), { style: 'Pie', keepNext: true }));
+      if (b.metaLine) body.push(para(run(b.metaLine, { color: BRAND.gray, sz: 16 }), { style: 'Pie', after: 280 }));
+    }
+    else if (b.type === 'table') {
+      const W = b.widths; const sz = b.sz || 18;
+      const rows = [b.head.map((h, i) => cell(para(run(h, { b: true, color: BRAND.pri, sz }), { after: 0 }), W[i], { fill: BRAND.tint })).join('')];
+      b.rows.forEach(r => rows.push(r.map((v, i) => cell(para(cellText(v, sz), { after: 0 }), W[i])).join('')));
+      body.push(table(rows, W, { header: true }));
+    }
+    else if (b.type === 'firmas') {
+      const cols = b.cols, per = Math.min(3, cols.length), w = Math.floor(TW / per), W = Array(per).fill(w);
+      const rows = [];
+      for (let r = 0; r < cols.length; r += per) {
+        const chunk = cols.slice(r, r + per);
+        while (chunk.length < per) chunk.push(null);
+        rows.push(chunk.map(c => {
+          if (!c) return cell('', w, { noBorder: true });
+          let sig = para('', { after: 820, keepNext: false });
+          if (c.img) {
+            const rid = addImg(c.img.bytes, 'png', docRels);
+            const [cx, cy] = fit(c.img.w, c.img.h, 4.4 * CM, 1.6 * CM);
+            sig = para(imageXml(rid, pid++, cx, cy, 'Firma'), { align: 'center', before: 40, after: 20, keepNext: false });
+          }
+          return cell(
+            para(run(c.rol, { b: true, color: BRAND.pri }), { before: r ? 200 : 0, after: 0, align: 'center', keepNext: false }) + sig +
+            para(run('Fdo.: ' + (c.nombre || '……………………………………')), { after: 0, align: 'center', border: BRAND.gray }) +
+            (c.nota ? para(run(c.nota, { sz: 17, color: BRAND.gray }), { after: 0, align: 'center' }) : '') +
+            (c.fecha ? para(run(c.fecha, { sz: 15, i: true, color: BRAND.gray }), { after: 0, align: 'center' }) : ''), w, { noBorder: true, valign: 'top' });
+        }).join(''));
+      }
+      body.push(para('', { before: 240, after: 0, keepNext: false }));
+      rows.forEach((r, i) => { if (i) body.push(para('', { before: 0, after: 0 })); body.push(table([r], W, { plain: true })); });
+    }
+    else if (b.type === 'line') body.push(para(run(b.text, { i: b.i }), { align: b.align, before: b.before ?? 240, after: 120 }));
+  }
+
+  const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1985" w:right="1418" w:bottom="1418" w:left="1418" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>`;
+  const NS = `xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"`;
+  const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body.join('')}${sect}</w:body></w:document>`;
+
+  // --- Cabecera: logo a la izquierda, organismo a la derecha
+  const H = d.header || {};
+  let logoCell = '<w:p/>';
+  if (H.logo) {
+    const rid = addImg(H.logo.bytes, H.logo.ext || 'png', hdrRels);
+    const [cx, cy] = fit(H.logo.w, H.logo.h, 5.5 * CM, 1.7 * CM);
+    logoCell = para(imageXml(rid, 9000, cx, cy, 'Logo'), { after: 0 });
+  }
+  const lines = (H.lines || []).filter(Boolean);
+  const txtCell = lines.map((l, i) => para(run(l, { b: i === 0, color: i === 0 ? BRAND.pri : BRAND.gray, sz: 17 }), { after: 0, align: 'right' })).join('') || '<w:p/>';
+  const header = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${table([cell(logoCell, 4300, { noBorder: true, valign: 'top' }) + cell(txtCell, TW - 4300, { noBorder: true, valign: 'top' })], [4300, TW - 4300], { plain: true })}<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p></w:hdr>`;
+
+  const footer = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="${BRAND.gray}"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="${TW}"/></w:tabs><w:spacing w:after="0"/></w:pPr>${run(d.footer || '', { color: BRAND.gray, sz: 16 })}<w:r><w:rPr><w:color w:val="${BRAND.gray}"/><w:sz w:val="16"/></w:rPr><w:tab/><w:t xml:space="preserve">Página </w:t></w:r><w:fldSimple w:instr=" PAGE ">${run('1', { color: BRAND.gray, sz: 16 })}</w:fldSimple>${run(' de ', { color: BRAND.gray, sz: 16 })}<w:fldSimple w:instr=" NUMPAGES ">${run('1', { color: BRAND.gray, sz: 16 })}</w:fldSimple></w:p></w:ftr>`;
+
+  const F = BRAND.font;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${F}" w:hAnsi="${F}" w:eastAsia="${F}" w:cs="${F}"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="es-ES"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>
+<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="0" w:after="80"/><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="4" w:color="${BRAND.pri}"/></w:pBdr></w:pPr><w:rPr><w:b/><w:caps/><w:color w:val="${BRAND.pri}"/><w:sz w:val="34"/><w:szCs w:val="34"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="320" w:after="100"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:caps/><w:color w:val="${BRAND.pri}"/><w:sz w:val="23"/><w:szCs w:val="23"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Pie"><w:name w:val="Pie de foto"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="40"/><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>
+<w:style w:type="character" w:styleId="Hipervinculo"><w:name w:val="Hyperlink"/><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style>
+<w:style w:type="table" w:styleId="Tabla"><w:name w:val="Tabla informe"/><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:color="${BRAND.border}"/><w:left w:val="single" w:sz="4" w:color="${BRAND.border}"/><w:bottom w:val="single" w:sz="4" w:color="${BRAND.border}"/><w:right w:val="single" w:sz="4" w:color="${BRAND.border}"/><w:insideH w:val="single" w:sz="4" w:color="${BRAND.border}"/><w:insideV w:val="single" w:sz="4" w:color="${BRAND.border}"/></w:tblBorders><w:tblCellMar><w:top w:w="50" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:bottom w:w="50" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style>
+</w:styles>`;
+
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
+  const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xe(d.subtitle || d.title)}</dc:title><dc:creator>${xe(d.author)}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
+  const relsXml = r => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${r.join('')}</Relationships>`;
+
+  return zipStore([
+    { name: '[Content_Types].xml', data: ct },
+    { name: '_rels/.rels', data: rootRels },
+    { name: 'docProps/core.xml', data: core },
+    { name: 'word/document.xml', data: document },
+    { name: 'word/styles.xml', data: styles },
+    { name: 'word/header1.xml', data: header },
+    { name: 'word/footer1.xml', data: footer },
+    { name: 'word/_rels/document.xml.rels', data: relsXml(docRels) },
+    { name: 'word/_rels/header1.xml.rels', data: relsXml(hdrRels) },
+    ...media,
+  ]);
+}
+if (typeof module !== 'undefined') module.exports = { buildDocx, zipStore, crc32 };
+
+
+// =====================================================================
+// MODELOS DE DOCUMENTO (editar aquí para ajustar campos y textos)
+// =====================================================================
+const CAMPOS = {
+  fecha:{l:'Fecha',t:'date'}, horaIni:{l:'Hora de inicio',t:'time'}, horaFin:{l:'Hora de finalización',t:'time'},
+  municipio:{l:'Término municipal'}, paraje:{l:'Paraje / lugar'}, polpar:{l:'Polígono / parcela'},
+  expediente:{l:'Nº de expediente / referencia'},
+};
+const DATOS = ['fecha','horaIni','horaFin','municipio','paraje','polpar','expediente'];
+const MODELOS = {
+  informe:{ nombre:'Informe', titulo:'Informe de visita de campo', corto:'Informe',
+    secciones:[
+      {t:'Datos de la visita', campos:DATOS},
+      {t:'Objeto de la visita', campos:[{k:'objeto',l:'Objeto de la visita',t:'area'}]},
+    ],
+    obs:'Observaciones', extras:[{k:'conclusiones',l:'Conclusiones / propuesta'}], firmas:['tecnico'] },
+  acta_insp:{ nombre:'Acta de inspección', titulo:'Acta de inspección', corto:'Acta_inspeccion',
+    secciones:[
+      {t:'Datos de la inspección', campos:DATOS},
+      {t:'Persona presente / interesado', campos:[{k:'intNombre',l:'Nombre y apellidos'},{k:'intDni',l:'DNI / NIE'},{k:'intCalidad',l:'En calidad de',t:'select',o:['','Titular','Representante','Encargado/a','Trabajador/a','Otro']},{k:'intDom',l:'Domicilio'},{k:'intNoFirma',l:'El/la interesado/a se niega a firmar',t:'check'}]},
+      {t:'Objeto de la inspección', campos:[{k:'objeto',l:'Objeto de la inspección',t:'area'}]},
+    ],
+    obs:'Hechos constatados', extras:[{k:'manif',l:'Manifestaciones del interesado'},{k:'requerimientos',l:'Requerimientos / medidas'}], firmas:['tecnico','interesado'] },
+  acta_ini:{ nombre:'Acta de inicio', titulo:'Acta de inicio', corto:'Acta_inicio',
+    secciones:[
+      {t:'Datos', campos:['fecha','horaIni','municipio','paraje','polpar','expediente']},
+      {t:'Actuación', campos:[{k:'actuacion',l:'Denominación de la actuación / obra',t:'area',full:1},{k:'promotor',l:'Promotor / titular'},{k:'contratista',l:'Contratista / ejecutor'},{k:'director',l:'Director/a o responsable técnico'},{k:'plazo',l:'Plazo de ejecución'}]},
+      {t:'Asistentes', campos:[{k:'asistentes',l:'Asistentes (nombre y cargo)',t:'area'}]},
+    ],
+    obs:'Comprobaciones y condicionantes', extras:[], firmas:['tecnico','promotor'] },
+  acta_fin:{ nombre:'Acta de finalización', titulo:'Acta de finalización', corto:'Acta_finalizacion',
+    secciones:[
+      {t:'Datos', campos:['fecha','horaIni','municipio','paraje','polpar','expediente']},
+      {t:'Actuación', campos:[{k:'actuacion',l:'Denominación de la actuación / obra',t:'area',full:1},{k:'promotor',l:'Promotor / titular'},{k:'contratista',l:'Contratista / ejecutor'},{k:'fechaIniAct',l:'Fecha de inicio de la actuación',t:'date'},{k:'resultado',l:'Resultado',t:'select',o:['','Conforme','Conforme con observaciones','No conforme']}]},
+      {t:'Asistentes', campos:[{k:'asistentes',l:'Asistentes (nombre y cargo)',t:'area'}]},
+    ],
+    obs:'Comprobaciones realizadas', extras:[{k:'deficiencias',l:'Deficiencias / correcciones pendientes'}], firmas:['tecnico','promotor'] },
+  denuncia:{ nombre:'Denuncia', titulo:'Boletín de denuncia', corto:'Denuncia',
+    secciones:[
+      {t:'Lugar, fecha y hora de los hechos', campos:['fecha',{k:'horaIni',l:'Hora de los hechos'},'municipio','paraje','polpar','expediente']},
+      {t:'Denunciado/a', campos:[{k:'denNombre',l:'Nombre y apellidos / razón social',full:1},{k:'denDni',l:'DNI / NIE / CIF del denunciado/a',full:1},{k:'denTel',l:'Teléfono'},{k:'denDom',l:'Domicilio',full:1},{k:'denLoc',l:'Localidad y provincia',full:1},{k:'denNoFirma',l:'El/la denunciado/a se niega a firmar',t:'check'}]},
+      {t:'Vehículo (si procede)', campos:[{k:'vehMat',l:'Matrícula'},{k:'vehMarca',l:'Marca / modelo'}]},
+      {t:'Infracción', campos:[{k:'norma',l:'Norma infringida',full:1},{k:'articulo',l:'Artículo(s)'},{k:'calif',l:'Calificación',t:'select',o:['','Leve','Grave','Muy grave','A determinar por el instructor']}]},
+    ],
+    obs:'Hechos denunciados', extras:[{k:'medidas',l:'Medidas adoptadas (decomiso, paralización…)'},{k:'testigos',l:'Testigos'},{k:'manif',l:'Manifestaciones del denunciado/a'}], firmas:['tecnico','denunciado'] },
+};
+const campo = c => typeof c==='string' ? {k:c,...CAMPOS[c]} : {...(CAMPOS[c.k]||{}),...c};
+
+// =====================================================================
+// ESTADO
+// =====================================================================
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const today = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const nowHM = () => { const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const blank = tipo => ({ tipo:tipo||'informe', v:{asunto:'', fecha:today(), horaIni:nowHM()}, obs:'', stamp:true, photos:[], track:{segs:[],name:'',src:'',rec:false}, firmas:{}, extraFirmas:[] });
+let S = blank();
+let CFG = { org1:'Junta de Comunidades de Castilla-La Mancha', org2:'', org3:'', nombre:'', cargo:'', tip:'', idMode:'ambos', logo:null, firma:null };
+const urls = new Map();
+const M = () => MODELOS[S.tipo] || MODELOS.informe;
+
+const fmtDT = ts => { const d=new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+const fmtD = s => { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); return m?`${m[3]}/${m[2]}/${m[1]}`:(s||''); };
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const fmtLarga = s => { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||''); return m?`${+m[3]} de ${MESES[m[2]-1]} de ${m[1]}`:''; };
+const toLocalInput = ts => new Date(ts - new Date(ts).getTimezoneOffset()*60000).toISOString().slice(0,19);
+const GPS_LBL = { exif:'GPS de la foto', gps:'GPS del dispositivo', manual:'introducidas a mano' };
+const utmTxt = (lat,lon) => { const u=toUTM(lat,lon); return `UTM ${u.zone}N X ${Math.round(u.x)} Y ${Math.round(u.y)}`; };
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const slug = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,'').slice(0,50);
+
+function toast(t,ms){ const el=$('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('on'),ms||2800); }
+function busy(on,t){ $('busy').classList.toggle('on',on); if(t) $('busyTxt').textContent=t; }
+
+// ----- Guardado local (IndexedDB)
+const Store = {
+  db:null,
+  async open(){ if(this.db) return this.db; this.db=await new Promise((res,rej)=>{ const r=indexedDB.open('visitas-campo',2); r.onupgradeneeded=()=>{ const d=r.result; if(!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); if(!d.objectStoreNames.contains('tiles')) d.createObjectStore('tiles'); }; r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); return this.db; },
+  async getTile(k){ const db=await this.open(); return new Promise((res)=>{ const q=db.transaction('tiles').objectStore('tiles').get(k); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); },
+  async putTile(k,b){ const db=await this.open(); return new Promise((res,rej)=>{ const tx=db.transaction('tiles','readwrite'); tx.objectStore('tiles').put(b,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); },
+  async delTiles(keys){ const db=await this.open(); return new Promise((res)=>{ const tx=db.transaction('tiles','readwrite'); const st=tx.objectStore('tiles'); keys.forEach(k=>st.delete(k)); tx.oncomplete=res; tx.onerror=()=>res(); }); },
+  async get(k){ const db=await this.open(); return new Promise((res,rej)=>{ const q=db.transaction('kv').objectStore('kv').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); },
+  async set(k,v){ const db=await this.open(); return new Promise((res,rej)=>{ const tx=db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
+};
+let saveT;
+async function persistNow(){ clearTimeout(saveT); saveT=null; try{ await Store.set('draft',S); $('saved').textContent='Borrador guardado · '+nowHM(); }catch(e){ $('saved').textContent='Sin guardado automático en esta vista'; } }
+function persist(){ clearTimeout(saveT); saveT=setTimeout(persistNow,500); }
+addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden' && saveT) persistNow(); });
+addEventListener('pagehide',()=>{ if(saveT) persistNow(); });
+async function persistCfg(){ try{ await Store.set('config',CFG); }catch(e){} }
+
+// =====================================================================
+// FORMULARIO SEGÚN MODELO
+// =====================================================================
+function renderTabs(){
+  $('tabs').innerHTML=Object.entries(MODELOS).map(([k,m])=>`<button class="tab ${k===S.tipo?'on':''}" data-t="${k}">${m.nombre}</button>`).join('');
+  $('hTitle').textContent=M().titulo;
+}
+$('tabs').onclick=e=>{ const t=e.target.closest('[data-t]')?.dataset.t; if(!t||t===S.tipo) return; S.tipo=t; renderTabs(); renderForm(); renderFirmas(); persist(); };
+
+function fieldHtml(c){
+  const v=S.v[c.k]??'';
+  const id='v_'+c.k, cls=(c.full||c.t==='area'||c.t==='check')?'full':'';
+  if(c.t==='check') return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${id}" data-v="${c.k}" ${v?'checked':''}> ${esc(c.l)}</label></div>`;
+  let inp;
+  if(c.t==='area') inp=`<div class="vz"><textarea id="${id}" data-v="${c.k}" rows="3">${esc(v)}</textarea><button class="mic" type="button" aria-label="Dictar">🎤</button></div>`;
+  else if(c.t==='select') inp=`<select id="${id}" data-v="${c.k}">${c.o.map(o=>`<option ${o===v?'selected':''} value="${esc(o)}">${o||'—'}</option>`).join('')}</select>`;
+  else if(c.t==='date'||c.t==='time') inp=`<input id="${id}" data-v="${c.k}" type="${c.t}" value="${esc(v)}">`;
+  else inp=`<input id="${id}" data-v="${c.k}" value="${esc(v)}">`;
+  return `<div class="${cls}"><label for="${id}">${esc(c.l)}</label>${inp}</div>`;
+}
+function renderForm(){
+  const m=M(); let h='';
+  m.secciones.forEach((s,i)=>{
+    h+=`<section><h2>${esc(s.t)}</h2><div class="grid">`;
+    if(i===0) h+=`<div class="full"><label for="v_asunto">Asunto / título del documento</label><div class="vz"><input id="v_asunto" data-v="asunto" placeholder="${esc(m.titulo)} – …" value="${esc(S.v.asunto||'')}"><button class="mic" type="button" aria-label="Dictar">🎤</button></div></div>`;
+    h+=s.campos.map(c=>fieldHtml(campo(c))).join('')+`</div></section>`;
+  });
+  h+=`<section><h2>${esc(m.obs)}</h2><div class="vz"><textarea id="v_obs" data-obs rows="6" placeholder="Escribe o dicta lo que observes durante la visita…">${esc(S.obs)}</textarea><button class="mic" type="button" aria-label="Dictar">🎤</button></div></section>`;
+  m.extras.forEach(x=>{ h+=`<section><h2>${esc(x.l)}</h2><div class="vz"><textarea data-v="${x.k}" rows="3">${esc(S.v[x.k]||'')}</textarea><button class="mic" type="button" aria-label="Dictar">🎤</button></div></section>`; });
+  $('form').innerHTML=h;
+}
+$('form').addEventListener('input',e=>{
+  const el=e.target;
+  if(el.dataset.obs!==undefined){ S.obs=el.value; persist(); return; }
+  const k=el.dataset.v; if(!k) return;
+  S.v[k]= el.type==='checkbox' ? el.checked : el.value; persist();
+  if(/^(intNombre|intDni|denNombre|denDni|contratista|promotor|intNoFirma|denNoFirma)$/.test(k)) renderFirmas();
+  if(/Dni$/.test(k)) dniHint(el);
+});
+$('form').addEventListener('change',e=>{ const el=e.target; if(el.type==='checkbox'&&el.dataset.v){ S.v[el.dataset.v]=el.checked; persist(); renderFirmas(); } });
+
+// =====================================================================
+// DICTADO POR VOZ
+// =====================================================================
+let VOZ=null, vozTarget=null, vozOn=false;
+function vozAppend(text){
+  if(!vozTarget||!text) return;
+  const cur=vozTarget.value;
+  let t=text;
+  if(!cur.trim()) t=t.trimStart().replace(/^./,c=>c.toUpperCase());
+  else if(!/\s$/.test(cur) && !/^\s/.test(t)) t=' '+t;
+  vozTarget.value=cur+t;
+  vozTarget.dispatchEvent(new Event('input',{bubbles:true}));
+}
+function vozUI(on){
+  vozOn=on; $('vozBar').classList.toggle('on',on);
+  document.querySelectorAll('.mic').forEach(b=>b.classList.toggle('on',on && b.parentNode.querySelector('textarea,input')===vozTarget));
+  if(!on) $('vozTxt').textContent='Escuchando…';
+}
+async function initVoz(){
+  // 1) Dictado de Claude (cuando la vista lo ofrece)
+  if(window.claude && typeof window.claude.use==='function'){
+    try{
+      const d=await window.claude.use('dictation');
+      if(d){
+        VOZ={kind:'claude',d};
+        d.onFinal(({text})=>vozAppend(text));
+        d.onPartial(({text})=>{ $('vozTxt').textContent=text||'Escuchando…'; });
+        d.onState(({state,reason})=>{
+          vozUI(state!=='idle');
+          if(state==='idle' && reason==='unavailable'){ document.body.classList.remove('voz'); toast('Dictado no disponible en esta vista. Usa el micrófono del teclado.'); }
+          if(state==='idle' && reason==='not_granted') toast('Permiso de micrófono denegado');
+        });
+        document.body.classList.add('voz'); return;
+      }
+    }catch(e){}
+  }
+  // 2) Reconocimiento de voz del navegador (app publicada en su propia web)
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(SR && !window.claude){
+    const rec=new SR(); rec.lang='es-ES'; rec.continuous=true; rec.interimResults=true;
+    rec.onresult=e=>{ let part=''; for(let i=e.resultIndex;i<e.results.length;i++){ const r=e.results[i]; if(r.isFinal) vozAppend(r[0].transcript); else part+=r[0].transcript; } $('vozTxt').textContent=part||'Escuchando…'; };
+    rec.onend=()=>vozUI(false);
+    rec.onerror=e=>{ vozUI(false); if(e.error==='not-allowed') toast('Permiso de micrófono denegado'); };
+    VOZ={kind:'web',rec}; document.body.classList.add('voz');
+  }
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.mic'); if(!b||!VOZ) return;
+  const ta=b.parentNode.querySelector('textarea,input');
+  if(VOZ.kind==='claude'){
+    if(VOZ.d.active() && vozTarget===ta){ VOZ.d.stop(); return; }
+    vozTarget=ta;
+    VOZ.d.start().catch(err=>{ if(err&&err.code==='not_granted') toast('Permiso de micrófono denegado'); else if(err&&err.code==='unavailable'){ document.body.classList.remove('voz'); toast('Dictado no disponible aquí. Usa el micrófono del teclado.'); } });
+    vozUI(true);
+  } else {
+    if(vozOn && vozTarget===ta){ VOZ.rec.stop(); return; }
+    if(vozOn){ try{ VOZ.rec.abort(); }catch(_){} }
+    vozTarget=ta; try{ VOZ.rec.start(); vozUI(true); }catch(_){ setTimeout(()=>{ try{ VOZ.rec.start(); vozUI(true); }catch(__){} },250); }
+  }
+});
+$('vozStop').onclick=()=>{ if(!VOZ) return; if(VOZ.kind==='claude') VOZ.d.stop(); else VOZ.rec.stop(); };
+
+// =====================================================================
+// GPS Y TRACK
+// =====================================================================
+let fix=null, geoState='unknown', wake=null;
+function chip(){
+  const c=$('gpsChip');
+  if(S.track.rec){ c.className='chip rec'; c.textContent='● Grabando'; return; }
+  if(geoState==='ok'&&fix){ c.className='chip ok'; c.textContent=`GPS ±${Math.round(fix.acc)} m`; }
+  else if(geoState==='denied'){ c.className='chip'; c.textContent='GPS: de la foto'; }
+  else { c.className='chip'; c.textContent='GPS…'; }
+}
+function startGPS(){
+  if(!('geolocation' in navigator)){ geoState='denied'; chip(); renderTrack(); return; }
+  try{
+    navigator.geolocation.watchPosition(p=>{
+      geoState='ok';
+      fix={lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy,ele:p.coords.altitude,t:p.timestamp||Date.now()};
+      if(S.track.rec) addTrackPoint(fix);
+      else if(!startGPS._t || Date.now()-startGPS._t>4000){ startGPS._t=Date.now(); drawPreview(); }
+      chip();
+    },err=>{ if(err.code===1||geoState!=='ok'){ geoState='denied'; chip(); renderTrack(); } },{enableHighAccuracy:true,maximumAge:5000,timeout:30000});
+  }catch(e){ geoState='denied'; chip(); }
+}
+function addTrackPoint(f){
+  if(f.acc>50) return;
+  const segs=S.track.segs; if(!segs.length) segs.push([]);
+  const seg=segs[segs.length-1], last=seg[seg.length-1];
+  const p=[f.lat,f.lon,f.t,f.ele!=null?f.ele:null];
+  if(last && hav(last,p)<5 && f.t-last[2]<30000) return;
+  seg.push(p); renderTrackStats(); drawPreview(); persist();
+}
+async function keepAwake(on){
+  try{ if(on && 'wakeLock' in navigator){ wake=await navigator.wakeLock.request('screen'); } else if(!on && wake){ await wake.release(); wake=null; } }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && S.track.rec) keepAwake(true); });
+function trackAction(a){
+  const T=S.track;
+  if(a==='start'||a==='resume'){
+    if(geoState==='denied'){ toast('El GPS no está disponible en esta vista. Abre la app en su propia web o importa un track.',4500); return; }
+    if(a==='start'){ T.segs=[[]]; T.src='gps'; T.name=''; } else T.segs.push([]);
+    T.rec=true; keepAwake(true); if(fix && Date.now()-fix.t<15000) addTrackPoint(fix);
+    toast('Grabando recorrido. Mantén la app abierta.');
+  }
+  if(a==='pause'){ T.rec=false; keepAwake(false); }
+  if(a==='stop'){ T.rec=false; keepAwake(false); T.segs=T.segs.filter(s=>s.length); toast('Recorrido finalizado'); }
+  if(a==='import') $('inTrack').click();
+  if(a==='kml') exportKml();
+  if(a==='del'){ S.track={segs:[],name:'',src:'',rec:false}; keepAwake(false); }
+  chip(); renderTrack(); persist();
+}
+function renderTrackStats(){
+  const st=trackStats(S.track.segs);
+  $('tDist').textContent=fmtDist(st.dist); $('tDur').textContent=fmtDur(st.dur||(st.t1&&st.t0?st.t1-st.t0:0)); $('tPts').textContent=st.n;
+}
+function renderTrack(){
+  const T=S.track, has=T.segs.some(s=>s.length), geoPhotos=S.photos.filter(p=>p.lat!=null).length;
+  renderTrackStats();
+  let b='';
+  if(T.rec) b+=`<button class="btn sm" data-tr="pause">⏸ Pausar</button><button class="btn sm red" data-tr="stop">⏹ Finalizar</button>`;
+  else if(has && T.src==='gps') b+=`<button class="btn sm pri" data-tr="resume">▶ Continuar</button>`;
+  else b+=`<button class="btn sm pri" data-tr="start" ${geoState==='denied'?'style="opacity:.55"':''}>▶ Grabar recorrido</button>`;
+  if(!T.rec) b+=`<button class="btn sm" data-tr="import">📂 Importar GPX/KML</button>`;
+  if(has||geoPhotos) b+=`<button class="btn sm" data-tr="kml">⬇️ Exportar KML</button>`;
+  if(has&&!T.rec) b+=`<button class="btn sm" data-tr="del" id="btnTrDel">🗑</button>`;
+  $('trackBtns').innerHTML=b;
+  $('trackHint').textContent = T.rec ? 'Mantén la pantalla encendida y la app abierta mientras caminas.'
+    : geoState==='denied' ? 'El GPS del dispositivo no está disponible en esta vista: puedes importar un track grabado con otra app (Wikiloc, OruxMaps, Google Earth…).'
+    : (T.name?`Track: ${T.name}`:'');
+  drawPreview();
+}
+$('trackBtns').onclick=e=>{
+  const b=e.target.closest('[data-tr]'); if(!b) return;
+  if(b.dataset.tr==='del' && !b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='¿Borrar track?'; setTimeout(()=>{ if(b.isConnected){ b.classList.remove('armed'); b.textContent='🗑'; } },3000); return; }
+  trackAction(b.dataset.tr);
+};
+$('inTrack').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  try{
+    const buf=await f.arrayBuffer();
+    const txt=/\.kmz$/i.test(f.name) ? await kmzToText(buf) : new TextDecoder().decode(buf);
+    const r=parseTrackText(txt);
+    S.track={segs:r.segs,name:r.name||f.name,src:'import',rec:false};
+    renderTrack(); persist(); toast(`Track importado: ${fmtDist(trackStats(r.segs).dist)}`);
+  }catch(err){ toast(err.message||'No se pudo leer el archivo'); }
+};
+
+// =====================================================================
+// MAPAS SIN CONEXIÓN: zonas PNOA descargadas + ortofotos propias
+// =====================================================================
+const TILE_SRC = [
+  (z, x, y) => `https://www.ign.es/wmts/pnoa-ma?service=WMTS&request=GetTile&version=1.0.0&layer=OI.OrthoimageCoverage&style=default&tilematrixset=GoogleMapsCompatible&format=image/jpeg&TileMatrix=${z}&TileCol=${x}&TileRow=${y}`,
+  (z, x, y) => `https://tms-pnoa-ma.idee.es/1.0.0/pnoa-ma/${z}/${x}/${(1 << z) - 1 - y}.jpeg`,
+];
+const PNOA_ATTR = 'Ortofoto PNOA máxima actualidad · CC BY 4.0 scne.es';
+let ZONES = [], LAYERS = [];
+const ZMIN = 13;
+const inClaude = () => !!window.claude;
+
+function zoneRange(zn, z) {
+  const dlat = zn.r / 111320, dlon = zn.r / (111320 * Math.cos(zn.lat * Math.PI / 180)), n = 2 ** z;
+  return { x0: Math.floor(mercX(zn.lon - dlon) * n), x1: Math.floor(mercX(zn.lon + dlon) * n), y0: Math.floor(mercY(zn.lat + dlat) * n), y1: Math.floor(mercY(zn.lat - dlat) * n) };
+}
+function zoneCount(zn) { let c = 0; for (let z = ZMIN; z <= zn.zmax; z++) { const r = zoneRange(zn, z); c += (r.x1 - r.x0 + 1) * (r.y1 - r.y0 + 1); } return c; }
+function* zoneKeys(zn) { for (let z = ZMIN; z <= zn.zmax; z++) { const r = zoneRange(zn, z); for (let x = r.x0; x <= r.x1; x++) for (let y = r.y0; y <= r.y1; y++) yield [z, x, y]; } }
+const fmtMB = b => b < 102400 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1048576).toFixed(b > 10485760 ? 0 : 1).replace('.', ',') + ' MB';
+
+// ----- Descarga de una zona
+let DL = null;
+async function downloadZone(zn) {
+  if (inClaude()) { toast('Dentro de Claude no se puede acceder al IGN. Usa la app publicada.', 4000); return; }
+  try { await navigator.storage?.persist?.(); } catch (e) { }
+  const keys = [...zoneKeys(zn)], total = keys.length;
+  DL = { cancel: false, done: 0, ok: 0, bytes: 0, fails: 0, src: 0, totalN: total };
+  renderDL();
+  let i = 0;
+  const worker = async () => {
+    while (!DL.cancel && i < keys.length) {
+      const [z, x, y] = keys[i++], key = `${z}/${x}/${y}`;
+      try {
+        if (await Store.getTile(key)) { DL.ok++; }
+        else {
+          let blob = null;
+          for (let a = 0; a < TILE_SRC.length && !blob; a++) {
+            const s = (DL.src + a) % TILE_SRC.length;
+            try { const r = await fetch(TILE_SRC[s](z, x, y), { mode: 'cors' }); if (r.ok && /image/.test(r.headers.get('content-type') || 'image')) { blob = await r.blob(); DL.src = s; } } catch (e) { }
+          }
+          if (blob && blob.size > 0) { await Store.putTile(key, blob); DL.ok++; DL.bytes += blob.size; } else DL.fails++;
+        }
+      } catch (e) { DL.fails++; }
+      DL.done++;
+      if (DL.done === 12 && DL.ok === 0) { DL.cancel = true; DL.error = 'No se puede acceder al servidor del IGN. Comprueba la conexión.'; }
+      if (DL.done % 8 === 0) renderDL();
+    }
+  };
+  await Promise.all(Array.from({ length: 6 }, worker));
+  const err = DL.error, cancelled = DL.cancel && !err;
+  if (DL.ok > 0) {
+    zn.tiles = DL.ok; zn.bytes = (zn.bytes || 0) + DL.bytes; zn.date = Date.now(); zn.partial = DL.ok < total;
+    const ex = ZONES.findIndex(z => z.id === zn.id); if (ex >= 0) ZONES[ex] = zn; else ZONES.push(zn);
+    await Store.set('zones', ZONES);
+  }
+  DL = null; renderMaps(); drawPreview();
+  toast(err || (cancelled ? 'Descarga cancelada (se guarda lo descargado)' : `Zona «${zn.name}» lista para usar sin conexión`), 4000);
+}
+function renderDL() {
+  const box = $('dlBox'); if (!box) return;
+  if (!DL) { box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="prog"><div style="width:${Math.round(DL.done / (DL.totalN || 1) * 100)}%"></div></div><div class="hint">Descargadas ${DL.done} de ${DL.totalN} teselas · ${fmtMB(DL.bytes)}${DL.fails ? ` · ${DL.fails} fallos` : ''} <a href="#" id="dlCancel">Cancelar</a></div>`;
+  $('dlCancel').onclick = e => { e.preventDefault(); if (DL) DL.cancel = true; };
+}
+async function deleteZone(id) {
+  const zn = ZONES.find(z => z.id === id); if (!zn) return;
+  const keep = new Set(); ZONES.filter(z => z.id !== id).forEach(o => { for (const [z, x, y] of zoneKeys(o)) keep.add(`${z}/${x}/${y}`); });
+  const del = []; for (const [z, x, y] of zoneKeys(zn)) { const k = `${z}/${x}/${y}`; if (!keep.has(k)) del.push(k); }
+  await Store.delTiles(del);
+  ZONES = ZONES.filter(z => z.id !== id); await Store.set('zones', ZONES); renderMaps(); drawPreview();
+}
+
+// ----- Ortofotos propias
+async function addOwnLayers(files) {
+  busy(true, 'Leyendo ortofoto…');
+  try {
+    const crsSel = $('m_crs').value; const crs = crsSel === 'geo' ? { type: 'geo' } : { type: 'utm', zone: +crsSel };
+    const res = await loadOwnOrtho(files, crs, p => $('busyTxt').textContent = `Leyendo ortofoto… ${Math.round(p * 100)}%`);
+    for (const r of res) {
+      const blob = await new Promise(ok => r.canvas.toBlob(ok, 'image/jpeg', .85));
+      const c = r.corners, br = [c.tr[0] + c.bl[0] - c.tl[0], c.tr[1] + c.bl[1] - c.tl[1]];
+      const lats = [c.tl[0], c.tr[0], c.bl[0], br[0]], lons = [c.tl[1], c.tr[1], c.bl[1], br[1]];
+      LAYERS.push({ id: Math.random().toString(36).slice(2), name: r.name, src: r.src, blob, w: r.canvas.width, h: r.canvas.height, corners: c, bbox: [Math.min(...lats), Math.min(...lons), Math.max(...lats), Math.max(...lons)], bytes: blob.size, date: Date.now() });
+      if (r.warn) toast(r.warn, 6000);
+    }
+    await Store.set('layers', LAYERS);
+    busy(false); renderMaps(); drawPreview();
+    if (!res.some(r => r.warn)) toast(res.length > 1 ? `${res.length} ortofotos cargadas` : 'Ortofoto cargada');
+  } catch (e) { busy(false); toast(e.message || 'No se pudo leer el archivo', 6000); }
+}
+
+// ----- Interfaz en ⚙️
+function zoneDraft() {
+  const c = parseCoords($('z_center').value);
+  return c ? { id: Math.random().toString(36).slice(2), name: $('z_name').value.trim() || 'Zona', lat: c.lat, lon: c.lon, r: +$('z_r').value, zmax: +$('z_z').value } : null;
+}
+function updEstimate() {
+  const zn = zoneDraft(), el = $('z_est'), b = $('btnZone');
+  if (!zn) { el.textContent = 'Indica el centro de la zona.'; b.disabled = true; return; }
+  const n = zoneCount(zn); el.textContent = `≈ ${n.toLocaleString('es-ES')} teselas · ≈ ${fmtMB(n * 22000)}`;
+  b.disabled = n > 20000 || !!DL || inClaude();
+  if (n > 20000) el.textContent += ' · demasiado grande: reduce radio o detalle';
+}
+async function renderMaps() {
+  const list = $('mapList'); if (!list) return;
+  const items = [
+    ...ZONES.map(z => `<div class="mi"><div><b>🛰️ ${esc(z.name)}</b><small>PNOA · radio ${z.r >= 1000 ? z.r / 1000 + ' km' : z.r + ' m'} · ${(z.tiles || 0).toLocaleString('es-ES')} teselas · ${fmtMB(z.bytes || 0)}${z.partial ? ' · incompleta' : ''} · ${fmtDT(z.date).slice(0, 10)}</small></div><button class="btn sm" data-dz="${z.id}">🗑</button></div>`),
+    ...LAYERS.map(l => `<div class="mi"><div><b>🖼️ ${esc(l.name)}</b><small>${esc(l.src)} · ${l.w}×${l.h} px · ${fmtMB(l.bytes)}</small></div><button class="btn sm" data-dl="${l.id}">🗑</button></div>`),
+  ];
+  list.innerHTML = items.length ? items.join('') : '<div class="hint">Todavía no hay mapas guardados en este dispositivo.</div>';
+  try { const e = await navigator.storage.estimate(); $('mapUse').textContent = `Ocupado en el dispositivo: ${fmtMB(e.usage || 0)}`; } catch (e) { }
+  $('zoneNote').hidden = !inClaude();
+  updEstimate(); renderDL();
+}
+function initMapsUI() {
+  ['z_center', 'z_name'].forEach(id => $(id).addEventListener('input', updEstimate));
+  ['z_r', 'z_z'].forEach(id => $(id).addEventListener('change', updEstimate));
+  $('z_here').onclick = () => { if (fix) { $('z_center').value = `${fix.lat.toFixed(6)}, ${fix.lon.toFixed(6)}`; updEstimate(); } else toast('No hay posición GPS disponible'); };
+  $('z_visit').onclick = () => {
+    const st = trackStats(S.track.segs), gp = geoPhotos();
+    const p = st.start ? { lat: st.start[0], lon: st.start[1] } : gp[0];
+    if (p) { $('z_center').value = `${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`; if (!$('z_name').value) $('z_name').value = S.v.paraje || S.v.municipio || ''; updEstimate(); }
+    else toast('La visita actual todavía no tiene coordenadas');
+  };
+  $('btnZone').onclick = () => { const zn = zoneDraft(); if (!zn || DL) return; downloadZone(zn).finally(updEstimate); };
+  $('btnOwn').onclick = () => $('inOwn').click();
+  $('inOwn').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) addOwnLayers(f); };
+  $('mapList').onclick = async e => {
+    const b = e.target.closest('[data-dz],[data-dl]'); if (!b) return;
+    if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = '¿Borrar?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('armed'); b.textContent = '🗑'; } }, 3000); return; }
+    if (b.dataset.dz) await deleteZone(b.dataset.dz);
+    else { LAYERS = LAYERS.filter(l => l.id !== b.dataset.dl); await Store.set('layers', LAYERS); LBMP.clear(); renderMaps(); drawPreview(); }
+  };
+}
+
+// =====================================================================
+// CROQUIS (Web Mercator) con fondo de ortofoto si está disponible
+// =====================================================================
+const LBMP = new Map();
+async function drawBackground(g, W, H, cx, cy, s) {
+  const X = wx => W / 2 + (wx - cx) * s, Y = wy => H / 2 + (wy - cy) * s;
+  const res = { pnoa: false, local: [] };
+  // 1) Teselas PNOA guardadas (con relleno desde niveles inferiores)
+  if (ZONES.length) {
+    const zt = Math.max(0, Math.min(19, Math.ceil(Math.log2(s / 256)))), n = 2 ** zt;
+    const tx0 = Math.floor((cx - W / 2 / s) * n), tx1 = Math.floor((cx + W / 2 / s) * n), ty0 = Math.floor((cy - H / 2 / s) * n), ty1 = Math.floor((cy + H / 2 / s) * n);
+    if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) <= 600) {
+      const cache = new Map();
+      const bmp = async k => { if (!cache.has(k)) { const b = await Store.getTile(k); cache.set(k, b ? await createImageBitmap(b) : null); } return cache.get(k); };
+      for (let x = tx0; x <= tx1; x++) for (let y = ty0; y <= ty1; y++) {
+        for (let d = 0; d <= 6 && zt - d >= 0; d++) {
+          const pz = zt - d, px = x >> d, py = y >> d, im = await bmp(`${pz}/${px}/${py}`);
+          if (!im) continue;
+          const sub = 256 / 2 ** d;
+          g.drawImage(im, (x - (px << d)) * sub, (y - (py << d)) * sub, sub, sub, Math.floor(X(x / n)), Math.floor(Y(y / n)), Math.ceil(s / n) + 1, Math.ceil(s / n) + 1);
+          res.pnoa = true; break;
+        }
+      }
+    }
+  }
+  // 2) Ortofotos propias (encima, son más específicas)
+  const lat0 = 360 / Math.PI * Math.atan(Math.exp(Math.PI * (1 - 2 * (cy + H / 2 / s)))) - 90, lat1 = 360 / Math.PI * Math.atan(Math.exp(Math.PI * (1 - 2 * (cy - H / 2 / s)))) - 90;
+  const lon0 = (cx - W / 2 / s) * 360 - 180, lon1 = (cx + W / 2 / s) * 360 - 180;
+  for (const L of LAYERS) {
+    const [a, b, c, d] = L.bbox; if (c < lat0 || a > lat1 || d < lon0 || b > lon1) continue;
+    if (!LBMP.has(L.id)) LBMP.set(L.id, await createImageBitmap(L.blob));
+    const im = LBMP.get(L.id), P = ll => [X(mercX(ll[1])), Y(mercY(ll[0]))];
+    const p0 = P(L.corners.tl), p1 = P(L.corners.tr), p2 = P(L.corners.bl);
+    g.save(); g.setTransform((p1[0] - p0[0]) / L.w, (p1[1] - p0[1]) / L.w, (p2[0] - p0[0]) / L.h, (p2[1] - p0[1]) / L.h, p0[0], p0[1]);
+    g.drawImage(im, 0, 0); g.restore();
+    res.local.push(L.name);
+  }
+  return res;
+}
+async function drawSketch(cv, segs, pts, opt = {}) {
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height, k = W / 1200;
+  const all = [...segs.flat().map(p => [p[0], p[1]]), ...pts.map(p => [p.lat, p.lon]), ...(opt.here ? [[opt.here.lat, opt.here.lon]] : [])];
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#f4f6f9'; g.fillRect(0, 0, W, H);
+  if (!all.length) return null;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, la = 0;
+  all.forEach(([a, o]) => { const x = mercX(o), y = mercY(a); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); la += a; });
+  la /= all.length; const cosl = Math.cos(la * Math.PI / 180);
+  const minW = (opt.minSpan || 250) / (EARTH_C * cosl);
+  const P = 70 * k, sx = Math.max(x1 - x0, minW), sy = Math.max(y1 - y0, minW);
+  const s = Math.min((W - 2 * P) / sx, (H - 2 * P) / sy), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const X = wx => W / 2 + (wx - cx) * s, Y = wy => H / 2 + (wy - cy) * s;
+  const PX = (lat, lon) => [X(mercX(lon)), Y(mercY(lat))];
+  const bg = await drawBackground(g, W, H, cx, cy, s);
+  const hasBg = bg.pnoa || bg.local.length;
+  if (!hasBg) { g.strokeStyle = '#e6eaf0'; g.lineWidth = 1 * k; for (let x = 0; x < W; x += 60 * k) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } for (let y = 0; y < H; y += 60 * k) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); } }
+  // track
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  segs.forEach(sg => {
+    if (sg.length < 2) return;
+    g.beginPath(); sg.forEach((p, i) => { const [x, y] = PX(p[0], p[1]); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.strokeStyle = hasBg ? 'rgba(255,255,255,.95)' : 'rgba(0,40,85,.18)'; g.lineWidth = (hasBg ? 10 : 12) * k; g.stroke();
+    g.strokeStyle = hasBg ? '#e8590c' : '#002855'; g.lineWidth = 5 * k; g.stroke();
+  });
+  const fl = segs.flat();
+  if (fl.length > 1) {
+    const [ax, ay] = PX(fl[0][0], fl[0][1]), [zx, zy] = PX(fl[fl.length - 1][0], fl[fl.length - 1][1]);
+    g.strokeStyle = '#fff'; g.lineWidth = 3 * k;
+    g.fillStyle = '#2f7d4f'; g.beginPath(); g.arc(ax, ay, 12 * k, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#c0392b'; g.fillRect(zx - 11 * k, zy - 11 * k, 22 * k, 22 * k); g.strokeRect(zx - 11 * k, zy - 11 * k, 22 * k, 22 * k);
+    g.fillStyle = '#fff'; g.font = `700 ${13 * k}px Arial`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('I', ax, ay + 1); g.fillText('F', zx, zy + 1);
+  }
+  pts.forEach(p => { const [x, y] = PX(p.lat, p.lon); g.fillStyle = '#d9822b'; g.strokeStyle = '#fff'; g.lineWidth = 3 * k; g.beginPath(); g.arc(x, y, 16 * k, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.font = `700 ${15 * k}px Arial`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.n, x, y + 1); });
+  if (opt.here) {
+    const [x, y] = PX(opt.here.lat, opt.here.lon), r = Math.max(8 * k, (opt.here.acc || 0) / (EARTH_C * cosl) * s);
+    g.fillStyle = 'rgba(26,115,232,.18)'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    g.fillStyle = '#1a73e8'; g.strokeStyle = '#fff'; g.lineWidth = 3 * k; g.beginPath(); g.arc(x, y, 9 * k, 0, 7); g.fill(); g.stroke();
+  }
+  // norte
+  const nx = W - 46 * k, ny = 56 * k;
+  if (hasBg) { g.fillStyle = 'rgba(255,255,255,.88)'; g.beginPath(); g.arc(nx, ny + 4 * k, 34 * k, 0, 7); g.fill(); }
+  g.fillStyle = '#002855'; g.beginPath(); g.moveTo(nx, ny - 24 * k); g.lineTo(nx + 11 * k, ny + 10 * k); g.lineTo(nx, ny + 3 * k); g.lineTo(nx - 11 * k, ny + 10 * k); g.closePath(); g.fill();
+  g.font = `700 ${14 * k}px Arial`; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText('N', nx, ny + 28 * k);
+  // escala
+  const mpp = EARTH_C * cosl / s, target = W * 0.2 * mpp, pow = 10 ** Math.floor(Math.log10(target));
+  const nice = [1, 2, 5, 10].map(m => m * pow).filter(v => v <= target).pop() || pow, len = nice / mpp, sx0 = 24 * k, sy0 = H - 28 * k;
+  if (hasBg) { g.fillStyle = 'rgba(255,255,255,.88)'; g.fillRect(sx0 - 10 * k, sy0 - 28 * k, len + 20 * k, 44 * k); }
+  g.fillStyle = '#002855'; g.fillRect(sx0, sy0, len, 7 * k); g.fillStyle = '#fff'; g.fillRect(sx0 + len / 2, sy0 + 1.5 * k, len / 2 - 1.5 * k, 4 * k);
+  g.fillStyle = '#1a2230'; g.font = `${14 * k}px Arial`; g.textAlign = 'left'; g.textBaseline = 'bottom'; g.fillText(nice >= 1000 ? (nice / 1000) + ' km' : nice + ' m', sx0, sy0 - 4 * k);
+  // atribución
+  const attr = bg.pnoa ? PNOA_ATTR + (bg.local.length ? ' · ' + bg.local.join(', ') : '') : bg.local.length ? 'Fondo: ' + bg.local.join(', ') : (opt.big ? 'Croquis sin base cartográfica · ETRS89' : '');
+  if (attr) {
+    g.font = `${12 * k}px Arial`; const tw = g.measureText(attr).width;
+    if (hasBg) { g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(W - tw - 18 * k, H - 24 * k, tw + 18 * k, 24 * k); }
+    g.fillStyle = '#444'; g.textAlign = 'right'; g.textBaseline = 'bottom'; g.fillText(attr, W - 9 * k, H - 6 * k);
+  }
+  return { ...bg, hasBg, attr };
+}
+function geoPhotos() { return S.photos.map((p, i) => ({ ...p, n: i + 1 })).filter(p => p.lat != null && !isNaN(p.lat)); }
+let prevBusy = false, prevAgain = false;
+async function drawPreview() {
+  if (prevBusy) { prevAgain = true; return; }
+  prevBusy = true;
+  try {
+    const cv = $('sketch'), segs = S.track.segs.filter(s => s.length), pts = geoPhotos();
+    const here = (geoState === 'ok' && fix) ? fix : null;
+    const show = segs.flat().length > 0 || pts.length > 0 || (here && (ZONES.length || LAYERS.length));
+    cv.style.display = show ? 'block' : 'none';
+    if (show) await drawSketch(cv, segs, pts, { here, minSpan: here && !segs.flat().length && !pts.length ? 400 : 250 });
+  } catch (e) { console.error(e); }
+  prevBusy = false;
+  if (prevAgain) { prevAgain = false; setTimeout(drawPreview, 400); }
+}
+
+// =====================================================================
+// FIRMAS MANUSCRITAS EN PANTALLA
+// =====================================================================
+const SigPad = (() => {
+  let cv, g, dpr = 1, ink = false, last = null, lastW = 3, cb = null;
+  function size() {
+    const r = cv.getBoundingClientRect(); dpr = Math.max(1, window.devicePixelRatio || 1);
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    g = cv.getContext('2d'); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#0b1f4d'; g.fillStyle = '#0b1f4d';
+    ink = false; $('sigOk').disabled = true;
+  }
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * dpr, y: (e.clientY - r.top) * dpr, t: e.timeStamp }; };
+  function down(e) { e.preventDefault(); cv.setPointerCapture(e.pointerId); last = pos(e); lastW = 3.2 * dpr; g.beginPath(); g.arc(last.x, last.y, lastW / 2, 0, 7); g.fill(); ink = true; $('sigOk').disabled = false; }
+  function move(e) {
+    if (!last) return; e.preventDefault();
+    const pts = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of pts) {
+      const p = pos(ev), d = Math.hypot(p.x - last.x, p.y - last.y); if (d < 1) continue;
+      const v = d / Math.max(1, p.t - last.t) / dpr; // px/ms
+      const w = Math.max(1.4, Math.min(4.2, 4.2 - v * 1.1)) * dpr; const ww = lastW * 0.65 + w * 0.35;
+      g.lineWidth = ww; g.beginPath(); g.moveTo(last.x, last.y);
+      const mx = (last.x + p.x) / 2, my = (last.y + p.y) / 2; g.quadraticCurveTo(last.x, last.y, mx, my); g.lineTo(p.x, p.y); g.stroke();
+      last = p; lastW = ww;
+    }
+  }
+  function up() { last = null; }
+  async function result() {
+    const W = cv.width, H = cv.height, data = g.getImageData(0, 0, W, H).data;
+    let x0 = W, y0 = H, x1 = -1, y1 = -1;
+    for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) if (data[(y * W + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return null;
+    const pad = 8 * dpr; x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W, x1 + pad); y1 = Math.min(H, y1 + pad);
+    const cw = x1 - x0, ch = y1 - y0, k = Math.min(1, 900 / cw);
+    const out = document.createElement('canvas'); out.width = Math.round(cw * k); out.height = Math.round(ch * k);
+    const og = out.getContext('2d'); og.imageSmoothingQuality = 'high'; og.drawImage(cv, x0, y0, cw, ch, 0, 0, out.width, out.height);
+    const blob = await new Promise(r => out.toBlob(r, 'image/png'));
+    return { blob, w: out.width, h: out.height, ts: Date.now() };
+  }
+  function open(title, sub, done) {
+    cb = done; $('sigWho').textContent = title; $('sigSub').textContent = sub || '';
+    $('sigSheet').classList.add('on'); requestAnimationFrame(size);
+  }
+  function close() { $('sigSheet').classList.remove('on'); cb = null; }
+  function init() {
+    cv = $('sigCv');
+    cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move);
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('pointerleave', up);
+    $('sigClear').onclick = size; $('sigCancel').onclick = close;
+    $('sigOk').onclick = async () => { const r = await result(); if (!r) return; const f = cb; close(); f && f(r); };
+    addEventListener('resize', () => { if ($('sigSheet').classList.contains('on') && !ink) size(); });
+  }
+  return { open, init };
+})();
+
+// ----- Firmantes de cada modelo
+const ROLES = {
+  tecnico: () => { const m = CFG.idMode || 'ambos', n = (CFG.nombre || '').trim(), p = (CFG.tip || '').trim();
+    return { rol: CFG.cargo || 'Técnico/a', doc: CFG.cargo || 'El/La técnico/a', own: true,
+      nombre: m === 'nip' ? (p ? 'NIP ' + p : n) : (n || (p ? 'NIP ' + p : '')),
+      nota: m === 'ambos' && n && p ? 'NIP: ' + p : '' }; },
+  interesado: v => ({ rol: 'Interesado/a o representante', doc: 'El/La interesado/a', nombre: v.intNombre, dni: v.intDni, refused: 'intNoFirma' }),
+  promotor: v => ({ rol: 'Adjudicatario / contratista', doc: 'Por el adjudicatario / contratista', nombre: v.contratista || v.promotor }),
+  denunciado: v => ({ rol: 'Denunciado/a o representante', doc: 'El/La denunciado/a', nombre: v.denNombre, dni: v.denDni, refused: 'denNoFirma', copia: true }),
+};
+function signers() {
+  const m = M(), v = S.v;
+  const ex = (S.extraFirmas || []).map(x => ({ key: 'x_' + x.id, extra: x, comp: !!x.comp, rol: x.rol || (x.comp ? 'Acompañante' : 'Firmante'), doc: x.rol || (x.comp ? 'Acompañante' : 'Firmante'), nombre: x.nombre || (x.dni && x.comp ? 'NIP ' + x.dni : ''), dni: x.dni }));
+  const base = m.firmas.map(k => ({ key: k, ...ROLES[k](v) }));
+  // Orden: técnico/agente, acompañantes, demás intervinientes
+  return [...base.filter(b => b.key === 'tecnico'), ...ex.filter(e => e.comp), ...base.filter(b => b.key !== 'tecnico'), ...ex.filter(e => !e.comp)];
+}
+const sigOf = s => (S.firmas || {})[s.key] || (s.key === 'tecnico' && CFG.firma ? { ...CFG.firma, saved: true } : null);
+const sigUrls = new Map();
+function sigUrl(blob) { if (!sigUrls.has(blob)) sigUrls.set(blob, URL.createObjectURL(blob)); return sigUrls.get(blob); }
+
+function renderFirmas() {
+  const box = $('firmasList'); if (!box) return;
+  S.firmas = S.firmas || {}; S.extraFirmas = S.extraFirmas || [];
+  box.innerHTML = signers().map(s => {
+    const sg = sigOf(s), refused = s.refused && S.v[s.refused];
+    const who = esc(s.nombre || '') || '<i>sin nombre</i>';
+    let status;
+    if (s.own && !sg) status = '<div class="sigst no">Guarda tu firma en ⚙️ para que se incluya sola, o firma aquí solo para este documento.</div>';
+    else if (refused) status = '<div class="sigst no">Se niega a firmar</div>';
+    else if (sg) status = `<img class="sigimg" alt="Firma" src="${sigUrl(sg.blob)}"><div class="sigst">${sg.saved ? 'Tu firma guardada · se incluye automáticamente' : 'Firmado ' + fmtDT(sg.ts).slice(0, 16)}</div>`;
+    else status = '<div class="sigst no">Sin firmar</div>';
+    const extra = s.extra ? (s.comp
+      ? `<div class="grid"><div><label>Cargo</label><input data-xr="${s.extra.id}" list="cargosList" value="${esc(s.extra.rol || '')}" placeholder="Agente Medioambiental"></div><div><label>NIP / DNI</label><input data-xd="${s.extra.id}" value="${esc(s.extra.dni || '')}"></div><div class="full"><label>Nombre y apellidos (opcional si usa NIP)</label><input data-xn="${s.extra.id}" value="${esc(s.extra.nombre || '')}"></div></div>`
+      : `<div class="grid"><div><label>Calidad</label><input data-xr="${s.extra.id}" list="rolesList" value="${esc(s.extra.rol || '')}" placeholder="Testigo, representante…"></div><div><label>DNI / NIE</label><input data-xd="${s.extra.id}" value="${esc(s.extra.dni || '')}"></div><div class="full"><label>Nombre y apellidos</label><input data-xn="${s.extra.id}" value="${esc(s.extra.nombre || '')}"></div></div>`) : '';
+    return `<div class="sigcard" data-k="${s.key}">
+      <div class="sighead"><div><b>${esc(s.rol)}</b><small>${who}${s.dni ? ' · ' + esc(s.dni) : ''}</small></div>
+        ${refused || (sg && sg.saved) ? '' : `<button class="btn sm ${sg ? '' : 'pri'}" data-sign="${s.key}">✍️ ${sg ? 'Repetir' : 'Firmar'}</button>`}
+        ${(S.firmas[s.key] || s.extra) ? `<button class="btn sm" data-sdel="${s.key}" aria-label="Quitar">🗑</button>` : ''}</div>
+      ${extra}${status}</div>`;
+  }).join('') + `<datalist id="cargosList"><option>Agente Medioambiental</option><option>Técnico/a</option><option>Guardia Civil (SEPRONA)</option><option>Policía Local</option><option>Celador/a de Medio Ambiente</option></datalist><datalist id="rolesList"><option>Testigo</option><option>Representante del interesado</option><option>Representante del adjudicatario</option><option>Director/a de obra</option><option>Agente actuante 2</option><option>Otro</option></datalist>`;
+}
+function initFirmas() {
+  SigPad.init();
+  $('firmasList').addEventListener('click', e => {
+    const b = e.target.closest('[data-sign],[data-sdel]'); if (!b) return;
+    if (b.dataset.sign) {
+      const s = signers().find(x => x.key === b.dataset.sign); if (!s) return;
+      if (!s.nombre && s.key !== 'tecnico') toast('Consejo: rellena antes el nombre del firmante');
+      SigPad.open(`Firma: ${s.rol}`, s.nombre || '', r => { S.firmas[s.key] = r; renderFirmas(); persistNow(); toast('Firma recogida ✔'); });
+    } else {
+      const k = b.dataset.sdel;
+      if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = '¿Quitar?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('armed'); b.textContent = '🗑'; } }, 3000); return; }
+      if (S.firmas[k]) delete S.firmas[k];
+      else if (k.startsWith('x_')) S.extraFirmas = S.extraFirmas.filter(x => 'x_' + x.id !== k);
+      renderFirmas(); persist();
+    }
+  });
+  $('firmasList').addEventListener('input', e => {
+    const t = e.target, id = t.dataset.xr || t.dataset.xn || t.dataset.xd; if (!id) return;
+    const x = S.extraFirmas.find(o => o.id === id); if (!x) return;
+    if (t.dataset.xr) x.rol = t.value; if (t.dataset.xn) x.nombre = t.value; if (t.dataset.xd) x.dni = t.value;
+    const card = t.closest('.sigcard'); card.querySelector('.sighead b').textContent = x.rol || (x.comp ? 'Acompañante' : 'Firmante'); card.querySelector('.sighead small').textContent = (x.nombre || (x.comp && x.dni ? 'NIP ' + x.dni : 'sin nombre')) + (x.dni && x.nombre ? ' · ' + x.dni : '');
+    persist();
+  });
+  const addX = comp => { S.extraFirmas.push({ id: Math.random().toString(36).slice(2), comp, rol: comp ? (CFG.cargo || 'Agente Medioambiental') : '', nombre: '', dni: '' }); renderFirmas(); persist(); setTimeout(() => { const l = document.querySelectorAll('[data-xn]'); l[l.length - 1]?.focus(); }, 50); };
+  $('btnAddSig').onclick = () => addX(true);
+  $('btnAddOther').onclick = () => addX(false);
+  // Firma guardada del técnico (⚙️)
+  $('btnMySig').onclick = () => SigPad.open('Tu firma (se usará en todos los documentos)', CFG.nombre || '', r => { CFG.firma = r; persistCfg(); fillMySig(); renderFirmas(); toast('Firma guardada'); });
+  $('btnMySigDel').onclick = () => { CFG.firma = null; persistCfg(); fillMySig(); renderFirmas(); };
+}
+function fillMySig() {
+  const im = $('mySigImg');
+  if (CFG.firma) { im.src = sigUrl(CFG.firma.blob); im.hidden = false; $('btnMySigDel').hidden = false; $('btnMySig').textContent = '✍️ Repetir'; }
+  else { im.hidden = true; $('btnMySigDel').hidden = true; $('btnMySig').textContent = '✍️ Firmar'; }
+}
+async function firmaColsDoc() {
+  const out = [];
+  for (const s of signers()) {
+    const sg = sigOf(s), refused = s.refused && S.v[s.refused];
+    let nota = '';
+    if (s.key === 'tecnico') nota = s.nota;
+    else if (refused) nota = 'Se niega a firmar';
+    else if (s.comp) nota = s.dni && s.extra.nombre ? 'NIP/DNI: ' + s.dni : '';
+    else if (s.dni) nota = 'DNI/NIE: ' + s.dni;
+    if (s.copia && !refused && sg) nota = (nota ? nota + ' · ' : '') + 'Recibí copia';
+    out.push({ rol: s.doc, nombre: s.nombre, nota, img: (!refused && sg) ? { bytes: new Uint8Array(await sg.blob.arrayBuffer()), w: sg.w, h: sg.h } : null, fecha: (!refused && sg && !sg.saved) ? 'Firmado en dispositivo: ' + fmtDT(sg.ts).slice(0, 16) : '' });
+  }
+  return out;
+}
+
+// =====================================================================
+// CERTIFICADO DIGITAL (.p12/.pfx) Y FIRMA CAdES-BES (sin dependencias)
+// =====================================================================
+const PKI = (() => {
+  // ---------- ASN.1 DER ----------
+  function node(b, p) {
+    const tag = b[p]; let q = p + 1, len = b[q++];
+    if (len & 0x80) { const n = len & 0x7f; len = 0; for (let i = 0; i < n; i++) len = len * 256 + b[q++]; }
+    return { tag, start: p, vs: q, end: q + len, b };
+  }
+  function kids(n) { const out = []; let p = n.vs; while (p < n.end) { const c = node(n.b, p); out.push(c); p = c.end; } return out; }
+  const val = n => n.b.subarray(n.vs, n.end), raw = n => n.b.subarray(n.start, n.end);
+  function oid(n) {
+    const v = val(n); const o = [Math.floor(v[0] / 40), v[0] % 40]; let x = 0;
+    for (let i = 1; i < v.length; i++) { x = x * 128 + (v[i] & 0x7f); if (!(v[i] & 0x80)) { o.push(x); x = 0; } }
+    return o.join('.');
+  }
+  const int = n => { let x = 0; for (const c of val(n)) x = x * 256 + c; return x; };
+  function octets(n) { // OCTET STRING primitivo o construido
+    if (!(n.tag & 0x20)) return val(n);
+    const parts = kids(n).map(octets); const out = new Uint8Array(parts.reduce((a, p) => a + p.length, 0)); let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; } return out;
+  }
+  const cat = (...a) => { const out = new Uint8Array(a.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of a) { out.set(x, o); o += x.length; } return out; };
+  function enc(tag, content) {
+    const L = content.length; let h;
+    if (L < 128) h = [tag, L]; else { const bs = []; let x = L; while (x) { bs.unshift(x & 255); x = Math.floor(x / 256); } h = [tag, 0x80 | bs.length, ...bs]; }
+    return cat(new Uint8Array(h), content);
+  }
+  const SEQ = (...a) => enc(0x30, cat(...a)), SET = (...a) => enc(0x31, cat(...a));
+  const OCT = b => enc(0x04, b), CTX = (n, b) => enc(0xa0 + n, b);
+  const INT = n => enc(0x02, new Uint8Array([n]));
+  const NULL = new Uint8Array([5, 0]);
+  function OID(s) {
+    const p = s.split('.').map(Number), out = [p[0] * 40 + p[1]];
+    for (const x of p.slice(2)) { const t = []; let y = x; t.unshift(y & 127); y = Math.floor(y / 128); while (y) { t.unshift((y & 127) | 128); y = Math.floor(y / 128); } out.push(...t); }
+    return enc(0x06, new Uint8Array(out));
+  }
+  const UTC = d => { const p = n => String(n).padStart(2, '0'); return enc(0x17, new TextEncoder().encode(`${p(d.getUTCFullYear() % 100)}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`)); };
+  const sha = async (alg, data) => new Uint8Array(await crypto.subtle.digest(alg, data));
+
+  // ---------- DES / 3DES (solo descifrado CBC) ----------
+  const T = {
+    IP: [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4, 62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8, 57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3, 61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7],
+    FP: [40, 8, 48, 16, 56, 24, 64, 32, 39, 7, 47, 15, 55, 23, 63, 31, 38, 6, 46, 14, 54, 22, 62, 30, 37, 5, 45, 13, 53, 21, 61, 29, 36, 4, 44, 12, 52, 20, 60, 28, 35, 3, 43, 11, 51, 19, 59, 27, 34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41, 9, 49, 17, 57, 25],
+    E: [32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1],
+    P: [16, 7, 20, 21, 29, 12, 28, 17, 1, 15, 23, 26, 5, 18, 31, 10, 2, 8, 24, 14, 32, 27, 3, 9, 19, 13, 30, 6, 22, 11, 4, 25],
+    PC1: [57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 10, 2, 59, 51, 43, 35, 27, 19, 11, 3, 60, 52, 44, 36, 63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22, 14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4],
+    PC2: [14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10, 23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2, 41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48, 44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32],
+    SH: [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1],
+    S: [
+      [14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7, 0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8, 4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0, 15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13],
+      [15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10, 3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5, 0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15, 13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9],
+      [10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8, 13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1, 13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7, 1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12],
+      [7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15, 13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9, 10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4, 3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14],
+      [2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9, 14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6, 4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14, 11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3],
+      [12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11, 10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8, 9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6, 4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13],
+      [4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1, 13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6, 1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2, 6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12],
+      [13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7, 1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2, 7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8, 2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]],
+  };
+  const bits = b => { const o = []; for (const x of b) for (let i = 7; i >= 0; i--) o.push((x >> i) & 1); return o; };
+  const bytes = a => { const o = new Uint8Array(a.length / 8); for (let i = 0; i < a.length; i++) o[i >> 3] |= a[i] << (7 - (i & 7)); return o; };
+  const perm = (t, a) => t.map(i => a[i - 1]);
+  function desKeys(k8) {
+    const k = perm(T.PC1, bits(k8)); let C = k.slice(0, 28), D = k.slice(28); const out = [];
+    for (const s of T.SH) { C = C.slice(s).concat(C.slice(0, s)); D = D.slice(s).concat(D.slice(0, s)); out.push(perm(T.PC2, C.concat(D))); }
+    return out;
+  }
+  function desBlock(blk, ks) {
+    const x = perm(T.IP, bits(blk)); let L = x.slice(0, 32), R = x.slice(32);
+    for (const k of ks) {
+      const e = perm(T.E, R).map((b, i) => b ^ k[i]), f = [];
+      for (let s = 0; s < 8; s++) { const b = e.slice(s * 6, s * 6 + 6), v = T.S[s][(b[0] * 2 + b[5]) * 16 + b[1] * 8 + b[2] * 4 + b[3] * 2 + b[4]]; f.push((v >> 3) & 1, (v >> 2) & 1, (v >> 1) & 1, v & 1); }
+      const pf = perm(T.P, f), nR = L.map((b, i) => b ^ pf[i]); L = R; R = nR;
+    }
+    return bytes(perm(T.FP, R.concat(L)));
+  }
+  function des3CbcDecrypt(key, iv, data) {
+    const k1 = desKeys(key.subarray(0, 8)), k2 = desKeys(key.subarray(8, 16)), k3 = desKeys(key.length >= 24 ? key.subarray(16, 24) : key.subarray(0, 8));
+    const d1 = k1.slice().reverse(), d3 = k3.slice().reverse();
+    const out = new Uint8Array(data.length); let prev = iv;
+    for (let o = 0; o < data.length; o += 8) {
+      const c = data.subarray(o, o + 8);
+      const p = desBlock(desBlock(desBlock(c, d3), k2), d1);
+      for (let i = 0; i < 8; i++) out[o + i] = p[i] ^ prev[i];
+      prev = c;
+    }
+    return unpad(out);
+  }
+  function unpad(b) { const n = b[b.length - 1]; if (n < 1 || n > 16 || n > b.length) throw new Error('pwd'); for (let i = 1; i <= n; i++) if (b[b.length - i] !== n) throw new Error('pwd'); return b.subarray(0, b.length - n); }
+
+  // ---------- KDF de PKCS#12 (RFC 7292, SHA-1) ----------
+  async function p12kdf(pwd, salt, id, iter, n) {
+    const v = 64, u = 20;
+    const pw = new Uint8Array((pwd.length + 1) * 2); for (let i = 0; i < pwd.length; i++) { const c = pwd.charCodeAt(i); pw[i * 2] = c >> 8; pw[i * 2 + 1] = c & 255; }
+    const fill = s => { if (!s.length) return new Uint8Array(0); const L = v * Math.ceil(s.length / v), o = new Uint8Array(L); for (let i = 0; i < L; i++) o[i] = s[i % s.length]; return o; };
+    const D = new Uint8Array(v).fill(id), I = cat(fill(salt), fill(pw)), out = [];
+    for (let got = 0; got < n; got += u) {
+      let A = await sha('SHA-1', cat(D, I));
+      for (let r = 1; r < iter; r++) A = await sha('SHA-1', A);
+      out.push(A);
+      const B = new Uint8Array(v); for (let i = 0; i < v; i++) B[i] = A[i % u];
+      for (let j = 0; j < I.length; j += v) { let c = 1; for (let k = v - 1; k >= 0; k--) { c += I[j + k] + B[k]; I[j + k] = c & 255; c >>= 8; } }
+    }
+    return cat(...out).subarray(0, n);
+  }
+
+  // ---------- Descifrado según algoritmo ----------
+  const AES = { '2.16.840.1.101.3.4.1.2': 16, '2.16.840.1.101.3.4.1.22': 24, '2.16.840.1.101.3.4.1.42': 32 };
+  const PRF = { '1.2.840.113549.2.7': 'SHA-1', '1.2.840.113549.2.9': 'SHA-256', '1.2.840.113549.2.10': 'SHA-384', '1.2.840.113549.2.11': 'SHA-512' };
+  async function decrypt(algNode, data, pwd) {
+    const [a, params] = kids(algNode), alg = oid(a);
+    if (alg === '1.2.840.113549.1.5.13') { // PBES2
+      const [kdf, es] = kids(params), [, kp] = kids(kdf), kpk = kids(kp);
+      const salt = val(kpk[0]), iter = int(kpk[1]);
+      let prf = 'SHA-1'; for (const k of kpk.slice(2)) if (k.tag === 0x30) prf = PRF[oid(kids(k)[0])] || 'SHA-1';
+      const [eo, ivn] = kids(es), ea = oid(eo), iv = val(ivn);
+      const keyLen = AES[ea] || (ea === '1.2.840.113549.3.7' ? 24 : 0);
+      if (!keyLen) throw new Error('alg:' + ea);
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveBits']);
+      const kb = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: iter, hash: prf }, base, keyLen * 8));
+      if (AES[ea]) { try { const k = await crypto.subtle.importKey('raw', kb, 'AES-CBC', false, ['decrypt']); return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, k, data)); } catch (e) { throw new Error('pwd'); } }
+      return des3CbcDecrypt(kb, iv, data);
+    }
+    if (alg === '1.2.840.113549.1.12.1.3' || alg === '1.2.840.113549.1.12.1.4') { // pbeWithSHAAnd3/2-KeyTripleDES-CBC
+      const [s, it] = kids(params), salt = val(s), iter = int(it);
+      const key = await p12kdf(pwd, salt, 1, iter, alg.endsWith('.3') ? 24 : 16), iv = await p12kdf(pwd, salt, 2, iter, 8);
+      return des3CbcDecrypt(key, iv, data);
+    }
+    if (/^1\.2\.840\.113549\.1\.12\.1\.[56]$/.test(alg)) throw new Error('rc2');
+    throw new Error('alg:' + alg);
+  }
+
+  // ---------- Certificado X.509 ----------
+  const NAMES = { '2.5.4.3': 'CN', '2.5.4.5': 'serialNumber', '2.5.4.42': 'givenName', '2.5.4.4': 'surname', '2.5.4.10': 'O', '2.5.4.11': 'OU', '2.5.4.6': 'C', '2.5.4.12': 'title' };
+  function parseName(n) { const o = {}; for (const rdn of kids(n)) for (const atv of kids(rdn)) { const [t, v] = kids(atv); const k = NAMES[oid(t)]; if (k) o[k] = new TextDecoder(v.tag === 0x1e ? 'utf-16be' : 'utf-8').decode(val(v)); } return o; }
+  function parseTime(n) { const s = new TextDecoder().decode(val(n)); const m = n.tag === 0x17 ? s.match(/^(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)?Z/) : s.match(/^\d\d(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)?Z/); if (!m) return null; const y = +m[1]; return new Date(Date.UTC(n.tag === 0x17 ? (y < 50 ? 2000 + y : 1900 + y) : +s.slice(0, 4), m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0))); }
+  function parseCert(der) {
+    const c = node(der, 0), [tbs] = kids(c), t = kids(tbs); let i = t[0].tag === 0xa0 ? 1 : 0;
+    const serial = t[i], issuer = t[i + 2], validity = kids(t[i + 3]), subject = t[i + 4], spki = t[i + 5];
+    const keyAlg = oid(kids(kids(spki)[0])[0]);
+    let isCA = false;
+    const ext = t.find(x => x.tag === 0xa3);
+    if (ext) for (const e of kids(kids(ext)[0])) { const ek = kids(e); if (oid(ek[0]) === '2.5.29.19') { const bc = kids(node(val(ek[ek.length - 1]), 0)); isCA = bc.length > 0 && bc[0].tag === 0x01 && val(bc[0])[0] !== 0; } }
+    return { der, serialRaw: raw(serial), issuerRaw: raw(issuer), issuer: parseName(issuer), subject: parseName(subject), notBefore: parseTime(validity[0]), notAfter: parseTime(validity[1]), keyAlg, isCA };
+  }
+
+  // ---------- PKCS#12 ----------
+  async function openP12(buf, pwd) {
+    const b = new Uint8Array(buf), pfx = node(b, 0);
+    if (pfx.tag !== 0x30) throw new Error('El archivo no es un certificado .p12/.pfx');
+    const [, authSafe] = kids(pfx), [, ac] = kids(authSafe);
+    const safes = kids(node(octets(kids(ac)[0]), 0));
+    const keys = [], certs = [];
+    const bagAttrs = bag => { const k = kids(bag); const a = k.find(x => x.tag === 0x31); let id = ''; if (a) for (const at of kids(a)) { const [o, vs] = kids(at); if (oid(o) === '1.2.840.113549.1.9.21') id = [...octets(kids(vs)[0])].join(','); } return id; };
+    async function bags(sc) {
+      for (const bag of kids(node(sc, 0))) {
+        const [bid, bv] = kids(bag), type = oid(bid), v = kids(bv)[0], id = bagAttrs(bag);
+        if (type === '1.2.840.113549.1.12.10.1.2') { const [alg, data] = kids(v); keys.push({ pk8: await decrypt(alg, val(data), pwd), id }); }
+        else if (type === '1.2.840.113549.1.12.10.1.1') keys.push({ pk8: raw(v), id });
+        else if (type === '1.2.840.113549.1.12.10.1.3') { const [ct, cv] = kids(v); if (oid(ct) === '1.2.840.113549.1.9.22.1') certs.push({ ...parseCert(octets(kids(cv)[0]).slice()), id }); }
+      }
+    }
+    for (const ci of safes) {
+      const [ct, content] = kids(ci), t = oid(ct);
+      if (t === '1.2.840.113549.1.7.1') await bags(octets(kids(content)[0]));
+      else if (t === '1.2.840.113549.1.7.6') {
+        const ed = kids(kids(content)[0]), eci = kids(ed[1]);
+        await bags(await decrypt(eci[1], octets(eci[2]), pwd));
+      }
+    }
+    if (!keys.length) throw new Error('El archivo no contiene la clave privada');
+    const key = keys[0];
+    const cert = certs.find(c => c.id && c.id === key.id) || certs.find(c => !c.isCA) || certs[0];
+    if (!cert) throw new Error('El archivo no contiene el certificado');
+    if (cert.keyAlg !== '1.2.840.113549.1.1.1') throw new Error('Solo se admiten certificados RSA');
+    return { pk8: key.pk8, cert, chain: certs };
+  }
+  function describe(c) {
+    const s = c.subject;
+    const nif = (s.serialNumber || '').replace(/^IDCES-|^IDC[A-Z]{2}-/, '');
+    const name = s.givenName && s.surname ? `${s.givenName} ${s.surname}` : (s.CN || '').replace(/\s*-\s*NIF.*$/i, '').replace(/\s*\(.*$/, '');
+    return { name: name.trim(), nif, cn: s.CN || '', org: s.O || '', issuer: c.issuer.CN || c.issuer.O || '', notAfter: c.notAfter, notBefore: c.notBefore };
+  }
+  function errMsg(e) {
+    const m = String(e && e.message || e);
+    if (m === 'pwd' || /OperationError/.test(m)) return 'Contraseña incorrecta';
+    if (m === 'rc2') return 'Certificado exportado con cifrado antiguo (RC2). Vuelve a exportarlo con cifrado AES (en Windows: «AES256-SHA256»).';
+    if (m.startsWith('alg:')) return 'Formato de cifrado del certificado no admitido (' + m.slice(4) + ')';
+    return m;
+  }
+
+  // ---------- Firma CAdES-BES con contenido incluido (.csig) ----------
+  async function signCades(p12buf, pwd, content) {
+    const { pk8, cert, chain } = await openP12(p12buf, pwd);
+    const now = new Date();
+    if (cert.notAfter && cert.notAfter < now) throw new Error('El certificado está caducado (' + cert.notAfter.toLocaleDateString('es-ES') + ')');
+    const key = await crypto.subtle.importKey('pkcs8', pk8, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+    const sha256Alg = SEQ(OID('2.16.840.1.101.3.4.2.1'), NULL);
+    const md = await sha('SHA-256', content), certHash = await sha('SHA-256', cert.der);
+    const attrs = [
+      SEQ(OID('1.2.840.113549.1.9.3'), SET(OID('1.2.840.113549.1.7.1'))),
+      SEQ(OID('1.2.840.113549.1.9.5'), SET(UTC(now))),
+      SEQ(OID('1.2.840.113549.1.9.4'), SET(OCT(md))),
+      SEQ(OID('1.2.840.113549.1.9.16.2.47'), SET(SEQ(SEQ(SEQ(OCT(certHash)))))),
+    ].sort((a, b) => { for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i]; return a.length - b.length; });
+    const signedAttrsSet = SET(...attrs);
+    const sig = new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, signedAttrsSet));
+    const signedAttrs = cat(new Uint8Array([0xa0]), signedAttrsSet.subarray(1));
+    const signerInfo = SEQ(INT(1), SEQ(cert.issuerRaw, cert.serialRaw), sha256Alg, signedAttrs, SEQ(OID('1.2.840.113549.1.1.1'), NULL), OCT(sig));
+    const certsField = CTX(0, cat(cert.der, ...chain.filter(c => c.der !== cert.der).map(c => c.der)));
+    const signedData = SEQ(INT(1), SET(sha256Alg), SEQ(OID('1.2.840.113549.1.7.1'), CTX(0, OCT(content))), certsField, SET(signerInfo));
+    return { csig: SEQ(OID('1.2.840.113549.1.7.2'), CTX(0, signedData)), info: describe(cert), when: now };
+  }
+  async function inspect(p12buf, pwd) { const { cert } = await openP12(p12buf, pwd); return describe(cert); }
+  return { inspect, signCades, errMsg, _test: { des3CbcDecrypt, p12kdf } };
+})();
+
+
+// =====================================================================
+// FOTOS
+// =====================================================================
+async function addFiles(files, fromCamera){
+  if(!files.length) return;
+  busy(true, files.length>1?`Procesando ${files.length} fotos…`:'Procesando foto…');
+  let sinGps=0;
+  for(const f of files){
+    try{
+      const buf=await f.arrayBuffer();
+      const ex=parseExif(buf);
+      const {blob,w,h}=await resize(f,1800);
+      const p={ id:Math.random().toString(36).slice(2), blob, w, h, comment:'',
+        ts: ex.ts || f.lastModified || Date.now(), lat:null, lon:null, acc:null, gpsSrc:null };
+      if(fromCamera && !ex.ts) p.ts=Date.now();
+      if(ex.lat!=null){ p.lat=ex.lat; p.lon=ex.lon; p.gpsSrc='exif'; }
+      else if(fix && (fromCamera || Math.abs(p.ts-Date.now())<5*60000) && Date.now()-fix.t<3*60000){ p.lat=fix.lat; p.lon=fix.lon; p.acc=fix.acc; p.gpsSrc='gps'; }
+      else sinGps++;
+      S.photos.push(p);
+    }catch(e){ toast('No se pudo leer una imagen'); }
+  }
+  busy(false); renderPhotos(); drawPreview(); renderTrack(); persistNow();
+  if(sinGps) toast(sinGps===1?'Foto sin coordenadas: puedes añadirlas a mano':`${sinGps} fotos sin coordenadas`);
+  setTimeout(()=>{ const l=document.querySelectorAll('.photo'); l[l.length-1]?.scrollIntoView({behavior:'smooth',block:'center'}); },60);
+}
+async function resize(file,max){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image(); img.src=url; await img.decode();
+    let w=img.naturalWidth,h=img.naturalHeight; const k=Math.min(1,max/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+    const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.86));
+    return {blob,w,h};
+  } finally { URL.revokeObjectURL(url); }
+}
+$('btnCam').onclick=()=>$('inCam').click();
+$('btnGal').onclick=()=>$('inGal').click();
+$('inCam').onchange=e=>{ addFiles([...e.target.files],true); e.target.value=''; };
+$('inGal').onchange=e=>{ addFiles([...e.target.files],false); e.target.value=''; };
+
+function urlFor(p){ if(!urls.has(p.id)) urls.set(p.id,URL.createObjectURL(p.blob)); return urls.get(p.id); }
+function renderPhotos(){
+  $('nFotos').textContent=S.photos.length;
+  const box=$('photos');
+  if(!S.photos.length){ box.innerHTML='<div class="empty">Aún no hay fotos.<br>Pulsa <b>📷 Foto</b> para empezar.</div>'; return; }
+  box.innerHTML='';
+  S.photos.forEach((p,i)=>{
+    const el=document.createElement('div'); el.className='photo';
+    const hasG=p.lat!=null&&!isNaN(p.lat);
+    el.innerHTML=`
+      <div class="img"><img alt="Foto ${i+1}" src="${urlFor(p)}"><span class="num">Foto ${i+1}</span>
+        <div class="tools">
+          <button class="ib" data-a="up" ${i===0?'disabled':''} aria-label="Subir">↑</button>
+          <button class="ib" data-a="down" ${i===S.photos.length-1?'disabled':''} aria-label="Bajar">↓</button>
+          <button class="ib del" data-a="del" aria-label="Eliminar">🗑</button>
+        </div></div>
+      <div class="body">
+        <div class="meta">
+          <span class="tag">🕒 ${fmtDT(p.ts)}</span>
+          ${hasG?`<span class="tag gps">📍 ${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}${p.acc?` ±${Math.round(p.acc)} m`:''}</span>`:'<span class="tag nogps">📍 Sin coordenadas</span>'}
+        </div>
+        <div class="vz"><textarea data-c rows="2" placeholder="Comentario para el pie de foto…"></textarea><button class="mic" type="button" aria-label="Dictar">🎤</button></div>
+        <details ${hasG?'':'open'}><summary>Editar fecha y coordenadas</summary>
+          <label>Fecha y hora</label><input type="datetime-local" step="1" data-ts value="${toLocalInput(p.ts)}">
+          <label>Coordenadas (lat, lon)</label><input data-ll inputmode="decimal" placeholder="39.86280, -4.02730 · o UTM 412134 4413034" value="${hasG?`${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}`:''}">
+          <div class="hint">${hasG?`${utmTxt(p.lat,p.lon)} · Origen: ${GPS_LBL[p.gpsSrc]||'—'}. `:''}Admite lat, lon (Google Maps) o X Y UTM ETRS89 huso 30.${fix&&geoState==='ok'?' <a href="#" data-a="here">Usar mi posición actual</a>':''}</div>
+        </details>
+      </div>`;
+    const ta=el.querySelector('[data-c]'); ta.value=p.comment;
+    ta.oninput=()=>{ p.comment=ta.value; persist(); };
+    el.querySelector('[data-ts]').onchange=e=>{ const t=new Date(e.target.value).getTime(); if(!isNaN(t)){ p.ts=t; renderPhotos(); persist(); } };
+    el.querySelector('[data-ll]').onchange=e=>{
+      const v=e.target.value.trim();
+      if(!v){ p.lat=p.lon=p.acc=null; p.gpsSrc=null; renderPhotos(); drawPreview(); persist(); return; }
+      const cc=parseCoords(v);
+      if(cc){ p.lat=cc.lat; p.lon=cc.lon; p.acc=null; p.gpsSrc='manual'; renderPhotos(); drawPreview(); renderTrack(); persist(); }
+      else toast('Formato no válido. Ej.: 39.86280, -4.02730 o 412134 4413034');
+    };
+    el.addEventListener('click',e=>{
+      const a=e.target.closest('[data-a]')?.dataset.a; if(!a) return;
+      if(a==='here'){ e.preventDefault(); if(fix){ p.lat=fix.lat; p.lon=fix.lon; p.acc=fix.acc; p.gpsSrc='gps'; renderPhotos(); drawPreview(); persist(); } }
+      if(a==='up'&&i>0){ [S.photos[i-1],S.photos[i]]=[S.photos[i],S.photos[i-1]]; renderPhotos(); drawPreview(); persist(); }
+      if(a==='down'&&i<S.photos.length-1){ [S.photos[i+1],S.photos[i]]=[S.photos[i],S.photos[i+1]]; renderPhotos(); drawPreview(); persist(); }
+      if(a==='del'){
+        const b=e.target.closest('.del');
+        if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='¿Borrar?'; setTimeout(()=>{ if(b.isConnected){ b.classList.remove('armed'); b.textContent='🗑'; } },3000); return; }
+        URL.revokeObjectURL(urls.get(p.id)); urls.delete(p.id); S.photos.splice(i,1); renderPhotos(); drawPreview(); renderTrack(); persist();
+      }
+    });
+    box.appendChild(el);
+  });
+}
+$('f_stamp').onchange=e=>{ S.stamp=e.target.checked; persist(); };
+
+// =====================================================================
+// CONFIGURACIÓN (membrete y técnico)
+// =====================================================================
+function fillCfg(){
+  document.querySelectorAll('[data-c]').forEach(el=>{ if(el.tagName!=='TEXTAREA') el.value=CFG[el.dataset.c]||''; });
+  const img=$('logoImg');
+  if(CFG.logo){ img.src=URL.createObjectURL(CFG.logo.blob); img.hidden=false; $('btnLogoDel').hidden=false; } else { img.hidden=true; $('btnLogoDel').hidden=true; }
+  fillMySig(); fillCert();
+}
+$('btnCfg').onclick=()=>{ fillCfg(); renderMaps(); $('cfgSheet').classList.add('on'); };
+$('btnCfgOk').onclick=()=>$('cfgSheet').classList.remove('on');
+$('cfgSheet').onclick=e=>{ if(e.target.id==='cfgSheet') $('cfgSheet').classList.remove('on'); };
+document.querySelectorAll('#cfgSheet [data-c]').forEach(el=>el.addEventListener('input',()=>{ CFG[el.dataset.c]=el.value; persistCfg(); renderFirmas(); }));
+$('btnLogo').onclick=()=>$('inLogo').click();
+$('btnLogoDel').onclick=()=>{ CFG.logo=null; persistCfg(); fillCfg(); };
+$('inLogo').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  const url=URL.createObjectURL(f);
+  try{
+    const img=new Image(); img.src=url; await img.decode();
+    let w=img.naturalWidth||600,h=img.naturalHeight||200; const k=Math.min(1,900/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+    const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+    CFG.logo={blob,w,h}; persistCfg(); fillCfg(); toast('Logo cargado');
+  }catch(err){ toast('No se pudo leer el logo'); } finally{ URL.revokeObjectURL(url); }
+};
+
+// =====================================================================
+// GENERAR WORD
+// =====================================================================
+async function stamped(p,n){
+  if(!S.stamp) return new Uint8Array(await p.blob.arrayBuffer());
+  const url=URL.createObjectURL(p.blob);
+  try{
+    const img=new Image(); img.src=url; await img.decode();
+    const c=document.createElement('canvas'); c.width=p.w; c.height=p.h; const g=c.getContext('2d');
+    g.drawImage(img,0,0,p.w,p.h);
+    const fs=Math.max(14,Math.round(p.w/50)), pd=Math.round(fs*.6);
+    const lines=[`Foto ${n} · ${fmtDT(p.ts)}`];
+    if(p.lat!=null) lines.push(`${p.lat.toFixed(6)}, ${p.lon.toFixed(6)} · ${utmTxt(p.lat,p.lon)}`);
+    const bh=lines.length*fs*1.3+pd*1.4;
+    g.fillStyle='rgba(0,40,85,.72)'; g.fillRect(0,p.h-bh,p.w,bh);
+    g.fillStyle='#fff'; g.font=`600 ${fs}px Arial, sans-serif`; g.textBaseline='top';
+    lines.forEach((t,k)=>g.fillText(t,pd,p.h-bh+pd*.7+k*fs*1.3));
+    const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.88));
+    return new Uint8Array(await b.arrayBuffer());
+  } finally { URL.revokeObjectURL(url); }
+}
+async function canvasBytes(c,type){ const b=await new Promise(r=>c.toBlob(r,type||'image/png',.88)); return new Uint8Array(await b.arrayBuffer()); }
+
+async function buildDoc(opt={}){
+  const m=M(), v=S.v;
+  if(!v.horaFin && m.secciones[0].campos.includes('horaFin')){ v.horaFin=nowHM(); }
+  const blocks=[];
+  const gp=geoPhotos(), segs=S.track.segs.filter(s=>s.length), st=trackStats(segs);
+  const ref = st.start ? {lat:st.start[0],lon:st.start[1]} : (gp[0] ? {lat:gp[0].lat,lon:gp[0].lon} : null);
+
+  m.secciones.forEach((s,i)=>{
+    const cs=s.campos.map(campo);
+    const areas=cs.filter(c=>c.t==='area'), rest=cs.filter(c=>c.t!=='area'&&c.t!=='check');
+    const rows=rest.map(c=>[c.l, c.t==='date'?fmtD(v[c.k]):(v[c.k]||'')]);
+    if(i===0 && ref) rows.push(['Coordenadas de referencia', `${ref.lat.toFixed(6)}, ${ref.lon.toFixed(6)} · ${utmTxt(ref.lat,ref.lon)}`]);
+    const filled=rows.some(r=>String(r[1]).trim()) || areas.some(a=>(v[a.k]||'').trim());
+    if(!filled) return;
+    blocks.push({type:'h',text:s.t});
+    if(rest.length===0 && areas.length===1){ blocks.push({type:'p',text:v[areas[0].k]}); return; }
+    blocks.push({type:'kv',rows:[...rows, ...areas.map(a=>[a.l, v[a.k]||''])]});
+  });
+  blocks.push({type:'h',text:m.obs}, {type:'p',text:S.obs,empty:'Sin observaciones.'});
+  m.extras.forEach(x=>{ if((v[x.k]||'').trim()) blocks.push({type:'h',text:x.l},{type:'p',text:v[x.k]}); });
+
+  // Recorrido / croquis
+  const cv=document.createElement('canvas'); cv.width=1600; cv.height=1000;
+  const sk=(segs.flat().length||gp.length) ? await drawSketch(cv,segs,gp,{big:true}) : null;
+  if(segs.flat().length>1 || gp.length>1 || (sk&&sk.hasBg)){
+    blocks.push({type:'h',text: segs.flat().length>1 ? 'Recorrido realizado' : 'Croquis de situación'});
+    if(segs.flat().length>1){
+      blocks.push({type:'kv',rows:[
+        ['Origen del track', S.track.src==='gps'?'Grabado con la app (GPS del dispositivo)':('Importado'+(S.track.name?': '+S.track.name:''))],
+        ['Distancia recorrida', fmtDist(st.dist)],
+        ['Duración', st.t0&&st.t1 ? `${fmtDur(st.t1-st.t0)} (${fmtDT(st.t0).slice(11,16)} – ${fmtDT(st.t1).slice(11,16)})` : ''],
+        ['Inicio', `${st.start[0].toFixed(6)}, ${st.start[1].toFixed(6)} · ${utmTxt(st.start[0],st.start[1])}`],
+        ['Final', `${st.end[0].toFixed(6)}, ${st.end[1].toFixed(6)} · ${utmTxt(st.end[0],st.end[1])}`],
+        ['Puntos registrados', String(st.n)],
+      ]});
+    }
+    blocks.push({type:'img',bytes:await canvasBytes(cv,'image/jpeg'),ext:'jpeg',w:1600,h:1000,maxWcm:16,maxHcm:10,
+      caption:(segs.flat().length>1?'Croquis del recorrido (I: inicio, F: final)':'Croquis de situación')+(gp.length?' y posición de las fotografías':'')+'.'+(sk.pnoa?' Fondo: ortofoto PNOA máxima actualidad, CC BY 4.0 scne.es.':'')+(sk.local.length?` Fondo: ${sk.local.join(', ')}.`:'')});
+  }
+
+  // Reportaje fotográfico
+  if(S.photos.length){
+    blocks.push({type:'h',text:'Reportaje fotográfico'});
+    for(let i=0;i<S.photos.length;i++){
+      const p=S.photos[i];
+      busy(true,`Preparando foto ${i+1} de ${S.photos.length}…`);
+      const coords=p.lat!=null?`${p.lat.toFixed(6)}, ${p.lon.toFixed(6)} · ${utmTxt(p.lat,p.lon)}${p.gpsSrc?` (${GPS_LBL[p.gpsSrc]})`:''}`:'sin coordenadas';
+      blocks.push({type:'photo',n:i+1,bytes:await stamped(p,i+1),w:p.w,h:p.h,comment:p.comment,metaLine:`${fmtDT(p.ts)}   ·   ${coords}`});
+    }
+    if(gp.length){
+      blocks.push({type:'h',text:'Anexo · Localización de las fotografías'});
+      blocks.push({type:'table',head:['Nº','Fecha y hora','Latitud','Longitud','X UTM','Y UTM','Mapa'],widths:[500,2000,1300,1300,1300,1450,1220],
+        rows:gp.map(p=>{ const u=toUTM(p.lat,p.lon); return [String(p.n),fmtDT(p.ts),p.lat.toFixed(6),p.lon.toFixed(6),Math.round(u.x)+'',Math.round(u.y)+'',{text:'Ver',url:`https://www.google.com/maps?q=${p.lat.toFixed(6)},${p.lon.toFixed(6)}`}]; })});
+      blocks.push({type:'line',text:`Coordenadas geográficas en ETRS89 (equivalente a WGS84). UTM huso ${toUTM(gp[0].lat,gp[0].lon).zone}N.`,i:true,before:80});
+    }
+  }
+
+  blocks.push({type:'line',text:`En ${v.municipio||'……………………'}, a ${fmtLarga(v.fecha)||'……………………'}.`,align:'left',before:360});
+  const fcols=await firmaColsDoc();
+  const others=signers().filter(s=>!s.own);
+  const signedOthers=others.filter(s=>(S.firmas||{})[s.key] && !(s.refused&&v[s.refused]));
+  const refusedOthers=others.filter(s=>s.refused&&v[s.refused]);
+  if(CFG.fe!==false && (signedOthers.length||refusedOthers.length)){
+    const who=[(CFG.idMode!=='nip'&&CFG.nombre)?CFG.nombre:'', (CFG.cargo||'')+(CFG.tip?' con NIP '+CFG.tip:'')].filter(x=>x.trim()).join(', ');
+    let t=`El/La funcionario/a que suscribe${who?', '+who:''}, en el ejercicio de sus funciones, DA FE de que`;
+    const ident=s=>s.comp ? (s.extra.nombre ? `${s.extra.nombre} (${s.rol}${s.dni?', '+s.dni:''})` : `${s.rol} con NIP ${s.dni||'—'}`) : `${s.nombre||s.rol}${s.dni?' ('+s.dni+')':''}`;
+    if(signedOthers.length) t+=` las firmas manuscritas de ${signedOthers.map(ident).join(', ')} han sido realizadas en su presencia sobre el dispositivo electrónico, en la fecha y hora indicadas bajo cada una, previa identificación de los firmantes`;
+    if(refusedOthers.length) t+=`${signedOthers.length?'; y de que':''} ${refusedOthers.map(s=>s.nombre||s.rol).join(', ')} se ha${refusedOthers.length>1?'n':''} negado a firmar tras serle${refusedOthers.length>1?'s':''} ofrecido el documento`;
+    blocks.push({type:'h',text:'Diligencia de fe pública'},{type:'p',text:t+'.'});
+  }
+  blocks.push({type:'firmas',cols:fcols});
+  if(opt.cert){
+    const c=opt.cert;
+    blocks.push({type:'h',text:'Firma electrónica'},
+      {type:'p',text:`Documento firmado electrónicamente por ${c.name}${c.nif?' (NIF '+c.nif+')':''} mediante certificado electrónico${c.issuer?' emitido por '+c.issuer:''}, el ${fmtDT(opt.when).slice(0,16)}. Formato de firma: CAdES (archivo .csig adjunto), verificable en https://valide.redsara.es o con AutoFirma.`});
+  }
+
+  const logo = CFG.logo ? {bytes:new Uint8Array(await CFG.logo.blob.arrayBuffer()),w:CFG.logo.w,h:CFG.logo.h,ext:'png'} : null;
+  return buildDocx({
+    header:{logo,lines:[CFG.org1,CFG.org2,CFG.org3]},
+    title:m.titulo, subtitle:(v.asunto||'').trim(),
+    meta:`Documento generado el ${fmtDT(Date.now()).slice(0,16)}${myIdent()?' por '+myIdent():''}`,
+    footer:`${m.titulo}${v.expediente?' · Exp. '+v.expediente:''}`, author:CFG.nombre, blocks });
+}
+async function makeDocBlob(opt){ const parts=await buildDoc(opt); await persistNow(); return new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}); }
+function docName(){ return `${M().corto}_${slug(S.v.asunto||S.v.paraje||S.v.municipio)||'visita'}_${S.v.fecha||today()}`.replace('__','_'); }
+async function genUnsigned(){
+  busy(true,'Generando documento…');
+  try{ const blob=await makeDocBlob({}); busy(false); await deliver(blob,docName()+'.docx','Documento'); }
+  catch(e){ busy(false); console.error(e); toast('Error al generar: '+(e.message||e)); }
+}
+async function genSigned(pwd){
+  const info=CFG.cert.info, when=new Date();
+  busy(true,'Generando y firmando…');
+  try{
+    const blob=await makeDocBlob({cert:info,when});
+    const docx=new Uint8Array(await blob.arrayBuffer());
+    const p12=await CFG.cert.blob.arrayBuffer();
+    const r=await PKI.signCades(p12,pwd,docx);
+    const base=docName();
+    const zip=new Blob(zipStore([{name:base+'.docx',data:docx},{name:base+'.docx.csig',data:r.csig}]));
+    busy(false); $('pwdSheet').classList.remove('on'); $('pwdIn').value='';
+    await deliver(zip,base+'_firmado.zip','Documento firmado');
+  }catch(e){ busy(false); $('pwdErr').textContent=PKI.errMsg(e); $('pwdIn').value=''; $('pwdIn').focus(); }
+}
+$('btnDoc').onclick=async()=>{
+  if(S.tipo==='denuncia' && !(S.v.denDni||'').trim() && !$('btnDoc').dataset.ok){ $('btnDoc').dataset.ok='1'; setTimeout(()=>delete $('btnDoc').dataset.ok,6000); toast('Falta el DNI/NIE del denunciado/a. Pulsa otra vez para generar igualmente.',5000); document.getElementById('v_denDni')?.focus(); return; }
+  if(CFG.cert){
+    const i=CFG.cert.info;
+    $('pwdTitle').textContent='Firmar con certificado'; $('pwdErr').textContent=''; $('pwdAlt').hidden=false;
+    $('pwdInfo').textContent=`${i.name}${i.nif?' · NIF '+i.nif:''}${i.notAfter?' · válido hasta '+new Date(i.notAfter).toLocaleDateString('es-ES'):''}`;
+    PWD_MODE='sign'; $('pwdSheet').classList.add('on'); setTimeout(()=>$('pwdIn').focus(),50); return;
+  }
+  genUnsigned();
+};
+let PWD_MODE='sign', PENDING_CERT=null;
+$('pwdForm').onsubmit=async e=>{ e.preventDefault(); const pw=$('pwdIn').value; if(!pw){ $('pwdErr').textContent='Escribe la contraseña'; return; }
+  if(PWD_MODE==='sign') return genSigned(pw);
+  try{ busy(true,'Leyendo certificado…'); const info=await PKI.inspect(await PENDING_CERT.arrayBuffer(),pw); busy(false);
+    if(info.notAfter && new Date(info.notAfter)<new Date()){ $('pwdErr').textContent='El certificado está caducado'; return; }
+    CFG.cert={blob:PENDING_CERT,info,name:PENDING_CERT.name}; PENDING_CERT=null; persistCfg(); fillCert(); $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; toast('Certificado cargado ✔');
+    if(info.nif || info.name){ if(!CFG.nombre && info.name){ CFG.nombre=info.name; fillCfg(); } }
+  }catch(err){ busy(false); $('pwdErr').textContent=PKI.errMsg(err); $('pwdIn').value=''; }
+};
+$('pwdCancel').onclick=()=>{ $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; PENDING_CERT=null; };
+$('pwdAlt').onclick=()=>{ $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; genUnsigned(); };
+$('btnCert').onclick=()=>$('inCert').click();
+$('inCert').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; PENDING_CERT=f; PWD_MODE='load';
+  $('pwdTitle').textContent='Cargar certificado'; $('pwdInfo').textContent=f.name; $('pwdErr').textContent=''; $('pwdAlt').hidden=true; $('pwdSheet').classList.add('on'); setTimeout(()=>$('pwdIn').focus(),50); };
+$('btnCertDel').onclick=e=>{ const b=e.currentTarget; if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='¿Quitar?'; setTimeout(()=>{ b.classList.remove('armed'); b.textContent='Quitar'; },3000); return; } CFG.cert=null; persistCfg(); fillCert(); };
+$('c_fe').onchange=e=>{ CFG.fe=e.target.checked; persistCfg(); };
+function fillCert(){
+  const c=CFG.cert, box=$('certBox');
+  if(c){ const i=c.info; box.innerHTML=`<b>🔐 ${esc(i.name)}</b>${i.nif?' · NIF '+esc(i.nif):''}<br>${i.issuer?'Emitido por '+esc(i.issuer)+' · ':''}${i.notAfter?'válido hasta '+new Date(i.notAfter).toLocaleDateString('es-ES'):''}<br>Guardado cifrado solo en este dispositivo. La contraseña se pide en cada firma.`; $('btnCertDel').hidden=false; $('btnCert').textContent='🔐 Cambiar certificado'; }
+  else { box.textContent='Para firmar los documentos como funcionario/fedatario. Se guarda cifrado en este dispositivo; la contraseña no se guarda.'; $('btnCertDel').hidden=true; $('btnCert').textContent='🔐 Cargar certificado'; }
+  $('c_fe').checked = CFG.fe!==false;
+}
+
+// ----- KML
+async function exportKml(){
+  const segs=S.track.segs.filter(s=>s.length>1), gp=geoPhotos();
+  if(!segs.length && !gp.length){ toast('No hay track ni fotos con coordenadas'); return; }
+  const base=`${M().corto}_${slug(S.v.asunto||S.v.paraje||S.v.municipio)||'visita'}_${S.v.fecha||today()}`.replace('__','_');
+  const kml=buildKml({ name:(S.v.asunto||M().titulo), desc:[S.v.municipio,S.v.paraje,S.v.expediente&&('Exp. '+S.v.expediente)].filter(Boolean).join(' · '), segs,
+    photos:gp.map(p=>({n:p.n,lat:p.lat,lon:p.lon,ts:p.ts,when:fmtDT(p.ts),comment:p.comment})) });
+  if(window.claude){ // en Claude no se permite descargar .kml directamente: va dentro de un .zip
+    const parts=zipStore([{name:base+'.kml',data:kml}]);
+    await deliver(new Blob(parts),base+'_kml.zip','KML (comprimido)');
+  } else await deliver(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'}),base+'.kml','KML');
+}
+
+async function deliver(blob,name,what){
+  if(window.claude && typeof window.claude.use==='function'){
+    let dl=null; try{ dl=await window.claude.use('downloads'); }catch(e){}
+    if(!dl){ toast('La descarga no está disponible en esta vista'); return; }
+    try{ await dl.save({filename:name,data:blob}); toast(`${what} guardado ✔`); }
+    catch(e){ toast(e&&e.code==='declined'?'Descarga cancelada':'No se pudo guardar ('+(e&&e.code||'error')+')'); }
+    return;
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000); toast(`${what} descargado ✔`);
+}
+
+// ----- Nueva visita
+$('btnNew').onclick=e=>{
+  const b=e.currentTarget;
+  if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='¿Borrar todo?'; setTimeout(()=>{ b.classList.remove('armed'); b.textContent='Nueva visita'; },3000); return; }
+  b.classList.remove('armed'); b.textContent='Nueva visita';
+  urls.forEach(u=>URL.revokeObjectURL(u)); urls.clear(); keepAwake(false);
+  S=blank(S.tipo); renderAll(); persist(); scrollTo({top:0,behavior:'smooth'}); toast('Nueva visita iniciada');
+};
+
+function renderAll(){ renderTabs(); renderForm(); renderPhotos(); renderTrack(); renderFirmas(); chip(); $('f_stamp').checked=S.stamp!==false; }
+
+// ----- App instalable (solo en la versión publicada en web propia)
+let installEvt=null;
+function initPWA(){
+  if(inClaude() || !('serviceWorker' in navigator) || !window.isSecureContext) return;
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  const note=$('pwaNote');
+  const standalone=matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if(standalone) return;
+  note.hidden=false;
+  note.innerHTML=/iphone|ipad/i.test(navigator.userAgent) ? 'Para usarla sin conexión: en Safari pulsa <b>Compartir → Añadir a pantalla de inicio</b>.' : 'Para usarla sin conexión, instálala: menú del navegador → <b>Instalar aplicación</b>.';
+  addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; note.innerHTML='Instálala para usarla sin conexión. <button class="btn sm pri" id="btnInst">Instalar app</button>'; $('btnInst').onclick=()=>installEvt.prompt(); });
+}
+
+function myIdent(){ const n=(CFG.nombre||'').trim(), p=(CFG.tip||'').trim(), m=CFG.idMode||'ambos';
+  if(m==='nip') return p?`${CFG.cargo||'Agente'} con NIP ${p}`:n;
+  if(m==='nombre') return n||(p?'NIP '+p:'');
+  return n?(n+(p?` (NIP ${p})`:'')):(p?'NIP '+p:''); }
+
+// ----- DNI / NIE: comprobación de la letra
+function checkDni(s){
+  const v=String(s||'').toUpperCase().replace(/[\s.-]/g,''); if(!v) return null;
+  const L='TRWAGMYFPDXBNJZSQVHLCKE';
+  let m=v.match(/^(\d{8})([A-Z])$/); if(m) return L[+m[1]%23]===m[2];
+  m=v.match(/^([XYZ])(\d{7})([A-Z])$/); if(m) return L[+(('XYZ'.indexOf(m[1]))+m[2])%23]===m[3];
+  if(/^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/.test(v)) return 'cif';
+  return false; }
+function dniHint(el){
+  let h=el.parentNode.querySelector('.dnih'); if(!h){ h=document.createElement('div'); h.className='hint dnih'; el.after(h); }
+  const r=checkDni(el.value);
+  h.textContent = r===null?'':r===true?'✓ DNI/NIE válido':r==='cif'?'CIF':'⚠️ Revisa el número o la letra';
+  h.style.color = r===false?'#c0392b':'#2f7d4f';
+}
+
+// ----- Arranque
+(async()=>{
+  try{
+    const c=await Store.get('config'); if(c&&typeof c==='object') CFG=Object.assign(CFG,c);
+    ZONES=(await Store.get('zones'))||[]; LAYERS=(await Store.get('layers'))||[];
+    const d=await Store.get('draft');
+    if(d&&typeof d==='object'){ const b=blank(d.tipo); S=Object.assign(b,d); S.v=Object.assign(b.v,d.v||{}); S.track=Object.assign(b.track,d.track||{}); S.track.rec=false; }
+  }catch(e){ $('saved').textContent='Sin guardado automático en esta vista'; }
+  renderAll(); initFirmas(); initMapsUI(); startGPS(); initVoz(); initPWA();
+  if(!CFG.nombre) setTimeout(()=>toast('Configura tu membrete y tus datos en ⚙️',3500),800);
+})();
+</script>
+</body>
+</html>
