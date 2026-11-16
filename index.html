@@ -39,6 +39,7 @@ textarea{resize:vertical;min-height:84px}
 .chk input{width:20px;height:20px;accent-color:var(--pri);flex:none}
 .vz{position:relative}
 .vz textarea,.vz input{padding-right:48px}
+.vz{width:100%}
 .mic{display:none;position:absolute;right:6px;top:6px;width:36px;height:36px;border:0;border-radius:10px;background:#e8edf5;color:var(--pri);font-size:17px;cursor:pointer}
 body.voz .mic{display:grid;place-items:center}
 .mic.on{background:var(--red);color:#fff;animation:pulse 1.2s infinite}
@@ -135,6 +136,9 @@ body.v-home header, body.v-home main, body.v-home .bar, body.v-list header, body
 .tcard{border:1.5px solid var(--line);border-radius:12px;padding:10px;background:#fff;cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
 .tcard b{display:block;font-size:14.5px}.tcard small{font-size:11.5px;color:var(--mute)}
 .tcard.on{border-color:var(--pri);background:#eef3fa}
+.chks{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.chks .chk{margin:6px 0}
+.mrow{border:1px solid var(--line);border-radius:12px;padding:8px 10px 10px;margin:8px 0;background:#f8f9fb}
+.mhd{display:flex;align-items:center;gap:8px}.mhd b{flex:1;color:var(--pri);font-size:14px}
 .note{background:#eef3fa;border-radius:10px;padding:10px 12px;font-size:13px;color:#344054;margin-top:10px}
 </style>
 </head>
@@ -254,7 +258,7 @@ body.v-home header, body.v-home main, body.v-home .bar, body.v-list header, body
   <div id="certBox" class="hint"></div>
   <div class="btns" style="margin-top:6px"><button class="btn sm pri" id="btnCert" type="button">🔐 Cargar certificado</button><button class="btn sm" id="btnCertDel" type="button" hidden>Quitar</button></div>
   <input type="file" id="inCert" accept=".p12,.pfx,application/x-pkcs12" hidden>
-  <label class="chk"><input type="checkbox" id="c_fe"> Incluir diligencia de fe pública sobre las firmas recogidas en mi presencia</label>
+  <label class="chk"><input type="checkbox" id="c_fe"> Incluir diligencia («HACE CONSTAR») sobre las firmas recogidas en mi presencia</label>
   <label>Tu firma guardada</label>
   <div class="logoPrev"><img id="mySigImg" alt="Firma" hidden style="background:#fff"><button class="btn sm" id="btnMySig" type="button">✍️ Firmar</button><button class="btn sm" id="btnMySigDel" type="button" hidden>Quitar</button></div>
   <div class="grid">
@@ -793,7 +797,7 @@ const BRAND = { pri: '002855', gray: '777779', tint: 'E6EAF0', border: 'A7B4C6',
 function run(text, o = {}) {
   let rp = '';
   if (o.style) rp += `<w:rStyle w:val="${o.style}"/>`;
-  if (o.b) rp += '<w:b/>'; if (o.i) rp += '<w:i/>'; if (o.caps) rp += '<w:caps/>';
+  if (o.b) rp += '<w:b/>'; if (o.i) rp += '<w:i/>'; if (o.caps) rp += '<w:caps/>'; if (o.u) rp += '<w:u w:val="single"/>';
   if (o.color) rp += `<w:color w:val="${o.color}"/>`;
   if (o.sz) rp += `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>`;
   const lines = String(text ?? '').split('\n');
@@ -851,7 +855,8 @@ function buildDocx(d) {
   const cellText = (v, sz) => (v && typeof v === 'object' && v.url) ? `<w:hyperlink r:id="${addLink(v.url)}" w:history="1">${run(v.text, { style: 'Hipervinculo', sz })}</w:hyperlink>` : run(v && typeof v === 'object' ? v.text : v, { sz });
 
   // --- Cuerpo
-  body.push(para(run(d.title || 'INFORME'), { style: 'Title' }));
+  if (d.titleCenter) body.push(para(run((d.title || 'ACTA').toUpperCase(), { b: true, u: true, sz: 40, color: BRAND.pri }), { align: 'center', before: 0, after: 160 }));
+  else body.push(para(run(d.title || 'INFORME'), { style: 'Title' }));
   if (d.subtitle) body.push(para(run(d.subtitle, { b: true, sz: 24 }), { after: 40 }));
   if (d.meta) body.push(para(run(d.meta, { i: true, color: BRAND.gray, sz: 17 }), { after: 200 }));
 
@@ -911,6 +916,22 @@ function buildDocx(d) {
       body.push(para('', { before: 240, after: 0, keepNext: false }));
       rows.forEach((r, i) => { if (i) body.push(para('', { before: 0, after: 0 })); body.push(table([r], W, { plain: true })); });
     }
+    else if (b.type === 'checks') {
+      const per = b.cols || 4, w = Math.floor(TW / per), rows = [];
+      for (let r = 0; r < b.items.length; r += per) {
+        const ch = b.items.slice(r, r + per); while (ch.length < per) ch.push(null);
+        rows.push(ch.map(it => cell(it ? para(run(it.on ? '☒' : '☐', { sz: 24, color: BRAND.pri }) + run(' ' + it.t, { b: true, sz: 19 }), { after: 40 }) : '', w, { noBorder: true, valign: 'top' })).join(''));
+      }
+      body.push(table(rows, Array(per).fill(w), { plain: true }));
+    }
+    else if (b.type === 'expline') body.push(para(run(b.text, { b: true, color: BRAND.pri, sz: 23 }), { before: 160, after: 160 }));
+    else if (b.type === 'box') {
+      const lines = String(b.text || '').trim().split(/\n+/);
+      const ps = (lines.length && lines[0] ? lines : ['']).map(l => para(run(l), { after: 80, align: 'both' })).join('');
+      body.push(table([cell(ps + (lines.length < 4 ? para('', { after: 400 }) : ''), TW)], [TW]));
+      body.push(para('', { after: 60 }));
+    }
+    else if (b.type === 'pagebreak') body.push('<w:p><w:r><w:br w:type="page"/></w:r></w:p>');
     else if (b.type === 'line') body.push(para(run(b.text, { i: b.i }), { align: b.align, before: b.before ?? 240, after: 120 }));
   }
 
@@ -922,7 +943,15 @@ function buildDocx(d) {
   //     logotipo de 20 mm de alto, a 10 mm del borde superior y del izquierdo.
   const H = d.header || {};
   let header = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>`;
-  if (H.logo) {
+  if (H.logo && H.side) {
+    // Modelo de acta AMA: logotipo y, a su derecha, la Consejería y la Delegación
+    const rid = addImg(H.logo.bytes, H.logo.ext || 'png', hdrRels);
+    const cy = Math.round(2 * CM), cx = Math.round(cy * H.logo.w / H.logo.h), lw = Math.round(cx / 635) + 150;
+    const side = H.side.filter(Boolean).map((l, i) => para(run(l, { b: i === 0, sz: i === 0 ? 18 : 16, color: BRAND.pri }), { after: 0 })).join('');
+    header += `<w:tbl><w:tblPr><w:tblW w:w="${lw + 4200}" w:type="dxa"/><w:tblInd w:w="-850" w:type="dxa"/><w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="${lw}"/><w:gridCol w:w="4200"/></w:tblGrid><w:tr>`
+      + `<w:tc><w:tcPr><w:tcW w:w="${lw}" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:spacing w:after="0"/></w:pPr>${imageXml(rid, 9000, cx, cy, 'Logotipo Junta de Comunidades de Castilla-La Mancha')}</w:p></w:tc>`
+      + `<w:tc><w:tcPr><w:tcW w:w="4200" w:type="dxa"/><w:vAlign w:val="bottom"/></w:tcPr>${side}</w:tc></w:tr></w:tbl><w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>`;
+  } else if (H.logo) {
     const rid = addImg(H.logo.bytes, H.logo.ext || 'png', hdrRels);
     const cy = Math.round(2 * CM), cx = Math.round(cy * H.logo.w / H.logo.h);
     header += `<w:p><w:pPr><w:spacing w:after="0"/><w:ind w:left="-850"/></w:pPr>${imageXml(rid, 9000, cx, cy, 'Logotipo Junta de Comunidades de Castilla-La Mancha')}</w:p>`;
@@ -984,6 +1013,8 @@ const CAMPOS = {
   expediente:{l:'Nº de expediente / referencia'},
 };
 const DATOS = ['fecha','horaIni','horaFin','municipio','paraje','polpar','expediente'];
+const LAB_DEFECTO = 'el Laboratorio Regional Agroalimentario y Ambiental de Castilla-La Mancha (LARAGA)';
+const AMBITOS_AMA = ['Conservación de la Naturaleza','Venenos','Caza y pesca','Montes y Vías pecuarias','Calidad y Evaluación ambiental','Incendios Forestales','Otros'];
 const MODELOS = {
   informe:{ nombre:'Informe', titulo:'Informe de visita de campo', corto:'Informe',
     secciones:[
@@ -1015,15 +1046,17 @@ const MODELOS = {
       {t:'Asistentes', campos:[{k:'asistentes',l:'Asistentes (nombre y cargo)',t:'area'}]},
     ],
     obs:'Comprobaciones realizadas', extras:[{k:'deficiencias',l:'Deficiencias / correcciones pendientes'}], firmas:['tecnico','promotor'] },
-  denuncia:{ nombre:'Denuncia', titulo:'Boletín de denuncia', corto:'Denuncia',
+  // Modelo oficial de acta del Cuerpo de Agentes Medioambientales de Castilla-La Mancha
+  acta_ama:{ nombre:'Acta AMA (modelo oficial)', titulo:'Acta', corto:'Acta_AMA', custom:'ama',
     secciones:[
-      {t:'Lugar, fecha y hora de los hechos', campos:['fecha',{k:'horaIni',l:'Hora de los hechos'},'municipio','paraje','polpar','expediente']},
-      {t:'Denunciado/a', campos:[{k:'denNombre',l:'Nombre y apellidos / razón social',full:1},{k:'denDni',l:'DNI / NIE / CIF del denunciado/a',full:1},{k:'denTel',l:'Teléfono'},{k:'denDom',l:'Domicilio',full:1},{k:'denLoc',l:'Localidad y provincia',full:1},{k:'denNoFirma',l:'El/la denunciado/a se niega a firmar',t:'check'}]},
-      {t:'Vehículo (si procede)', campos:[{k:'vehMat',l:'Matrícula'},{k:'vehMarca',l:'Marca / modelo'}]},
-      {t:'Infracción', campos:[{k:'norma',l:'Norma infringida',full:1},{k:'articulo',l:'Artículo(s)'},{k:'calif',l:'Calificación',t:'select',o:['','Leve','Grave','Muy grave','A determinar por el instructor']}]},
+      {t:'Ámbito de la actuación', campos:[{k:'ambitos',l:'Marca el ámbito',t:'checks',o:AMBITOS_AMA,full:1},{k:'ambitoOtro',l:'Otros (especificar)',full:1}]},
+      {t:'Lugar, fecha y hora', campos:[{k:'expediente',l:'Caso / expediente'},'fecha',{k:'horaIni',l:'Hora'},{k:'paraje',l:'Se personan en (lugar / paraje)',full:1},'municipio',{k:'provincia',l:'Provincia'}]},
+      {t:'Empresa / titular y compareciente', campos:[{k:'titular',l:'Empresa con razón social / Titular',full:1},{k:'cif',l:'CIF / NIF'},{k:'telTit',l:'Teléfono'},{k:'domicilio',l:'Domicilio social',full:1},{k:'intNombre',l:'Compareciente (nombre y apellidos)',full:1},{k:'intDni',l:'DNI / NIE del compareciente'},{k:'intCalidad',l:'En calidad de',t:'select',o:['','Titular','Representante','Encargado/a','Trabajador/a','Testigo','Otro']},{k:'intNoFirma',l:'El/la compareciente se niega a firmar',t:'check'}]},
+      {t:'Muestras recogidas', campos:[{k:'muestras',l:'Muestras',t:'muestras',full:1},{k:'remite',l:'Se remiten la/s muestra/s a (centro de análisis)',full:1}]},
     ],
-    obs:'Hechos denunciados', extras:[{k:'medidas',l:'Medidas adoptadas (decomiso, paralización…)'},{k:'testigos',l:'Testigos'},{k:'manif',l:'Manifestaciones del denunciado/a'}], firmas:['tecnico','denunciado'] },
+    obs:'Hechos que se ponen de manifiesto', extras:[{k:'manif',l:'El testigo / compareciente manifiesta'}], firmas:['tecnico','interesado'] },
 };
+const AMBITOS_AMA_ORDER = AMBITOS_AMA;
 const campo = c => typeof c==='string' ? {k:c,...CAMPOS[c]} : {...(CAMPOS[c.k]||{}),...c};
 
 // =====================================================================
@@ -1085,12 +1118,22 @@ function fieldHtml(c){
   const v=S.v[c.k]??'';
   const id='v_'+c.k, cls=(c.full||c.t==='area'||c.t==='check')?'full':'';
   if(c.t==='check') return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${id}" data-v="${c.k}" ${v?'checked':''}> ${esc(c.l)}</label></div>`;
+  if(c.t==='checks'){ const sel=Array.isArray(v)?v:[]; return `<div class="full"><div class="chks">${c.o.map(o=>`<label class="chk"><input type="checkbox" data-vc="${c.k}" value="${esc(o)}" ${sel.includes(o)?'checked':''}> ${esc(o)}</label>`).join('')}</div></div>`; }
+  if(c.t==='muestras') return `<div class="full"><div id="mu_${c.k}" data-mu="${c.k}">${muestrasHtml(c.k)}</div></div>`;
   let inp;
   if(c.t==='area') inp=`<div class="vz"><textarea id="${id}" data-v="${c.k}" rows="3">${esc(v)}</textarea><button class="mic" type="button" aria-label="Dictar">🎤</button></div>`;
   else if(c.t==='select') inp=`<select id="${id}" data-v="${c.k}">${c.o.map(o=>`<option ${o===v?'selected':''} value="${esc(o)}">${o||'—'}</option>`).join('')}</select>`;
   else if(c.t==='date'||c.t==='time') inp=`<input id="${id}" data-v="${c.k}" type="${c.t}" value="${esc(v)}">`;
   else inp=`<input id="${id}" data-v="${c.k}" value="${esc(v)}">`;
   return `<div class="${cls}"><label for="${id}">${esc(c.l)}</label>${inp}</div>`;
+}
+function muestrasHtml(k){
+  const L=Array.isArray(S.v[k])?S.v[k]:[];
+  return L.map((m,i)=>`<div class="mrow"><div class="mhd"><b>Muestra ${i+1}</b><button class="btn sm" type="button" data-mpos="${i}">📍 Mi posición</button><button class="btn sm" type="button" data-mdel="${i}">🗑</button></div>
+    <div class="grid"><div class="full"><label>Tipo (cadáver, sustancias, cebos, objetos…)</label><input data-mi="${i}" data-mf="tipo" value="${esc(m.tipo||'')}"></div>
+    <div class="full"><label>Nº de precinto</label><input data-mi="${i}" data-mf="precinto" value="${esc(m.precinto||'')}"></div>
+    <div><label>X UTM (ETRS89)</label><input data-mi="${i}" data-mf="x" inputmode="numeric" value="${esc(m.x||'')}"></div><div><label>Y UTM (ETRS89)</label><input data-mi="${i}" data-mf="y" inputmode="numeric" value="${esc(m.y||'')}"></div></div></div>`).join('')
+   + `<button class="btn sm pri" type="button" data-madd="${k}">＋ Añadir muestra</button>`;
 }
 function renderForm(){
   const m=M(); let h='';
@@ -1105,13 +1148,23 @@ function renderForm(){
 }
 $('form').addEventListener('input',e=>{
   const el=e.target;
+  if(el.dataset.mi!==undefined){ const box=el.closest('[data-mu]'), k=box.dataset.mu; S.v[k][+el.dataset.mi][el.dataset.mf]=el.value; persist(); return; }
+  if(el.dataset.vc){ S.v[el.dataset.vc]=[...document.querySelectorAll(`[data-vc="${el.dataset.vc}"]:checked`)].map(x=>x.value); persist(); return; }
   if(el.dataset.obs!==undefined){ S.obs=el.value; persist(); return; }
   const k=el.dataset.v; if(!k) return;
   S.v[k]= el.type==='checkbox' ? el.checked : el.value; persist();
   if(/^(intNombre|intDni|denNombre|denDni|contratista|promotor|intNoFirma|denNoFirma)$/.test(k)) renderFirmas();
   if(/Dni$/.test(k)) dniHint(el);
 });
-$('form').addEventListener('change',e=>{ const el=e.target; if(el.type==='checkbox'&&el.dataset.v){ S.v[el.dataset.v]=el.checked; persist(); renderFirmas(); } });
+$('form').addEventListener('change',e=>{ const el=e.target; if(el.dataset.vc){ S.v[el.dataset.vc]=[...document.querySelectorAll(`[data-vc="${el.dataset.vc}"]:checked`)].map(x=>x.value); persist(); return; } if(el.type==='checkbox'&&el.dataset.v){ S.v[el.dataset.v]=el.checked; persist(); renderFirmas(); } });
+$('form').addEventListener('click',e=>{
+  const b=e.target.closest('[data-madd],[data-mdel],[data-mpos]'); if(!b) return;
+  const box=b.closest('[data-mu]'), k=box.dataset.mu; if(!Array.isArray(S.v[k])) S.v[k]=[];
+  if(b.dataset.madd!==undefined){ const m={tipo:'',precinto:'',x:'',y:''}; if(fix&&geoState==='ok'){ const u=toUTM(fix.lat,fix.lon); m.x=String(Math.round(u.x)); m.y=String(Math.round(u.y)); } S.v[k].push(m); }
+  else if(b.dataset.mdel!==undefined){ if(!b.classList.contains('armed')){ b.classList.add('armed'); b.textContent='¿Quitar?'; setTimeout(()=>{ if(b.isConnected){ b.classList.remove('armed'); b.textContent='🗑'; } },3000); return; } S.v[k].splice(+b.dataset.mdel,1); }
+  else if(b.dataset.mpos!==undefined){ const p=(fix&&geoState==='ok')?fix:(geoPhotos().slice(-1)[0]||null); if(!p){ toast('Sin posición: GPS no disponible ni fotos con coordenadas'); return; } const u=toUTM(p.lat,p.lon); Object.assign(S.v[k][+b.dataset.mpos],{x:String(Math.round(u.x)),y:String(Math.round(u.y))}); toast(fix&&geoState==='ok'?'Coordenadas de tu posición actual':'Coordenadas de la última foto'); }
+  box.innerHTML=muestrasHtml(k); persist();
+});
 
 // =====================================================================
 // DICTADO POR VOZ
@@ -1119,13 +1172,31 @@ $('form').addEventListener('change',e=>{ const el=e.target; if(el.type==='checkb
 let VOZ=null, vozTarget=null, vozOn=false;
 function vozAppend(text){
   if(!vozTarget||!text) return;
-  const cur=vozTarget.value;
+  const cur=vozTarget.value, single=vozTarget.tagName==='INPUT', key=vozTarget.dataset.v||vozTarget.dataset.mf||vozTarget.dataset.xd||vozTarget.id||'';
+  if(single && /(dni|cif|precinto|tel|c_tip|xd)/i.test(key+(vozTarget.dataset.xd!==undefined?' xd':''))){ vozTarget.value=(cur+text).toUpperCase().replace(/[.,]\s*$/,'').replace(/\s+/g,'').replace(/^NIP:?/,''); vozTarget.dispatchEvent(new Event('input',{bubbles:true})); vozTarget.dispatchEvent(new Event('change',{bubbles:true})); return; }
+  const num=/^(numeric|tel|decimal)$/.test(vozTarget.inputMode||'');
   let t=text;
+  if(num){ vozTarget.value=(cur+t).replace(/[^\dA-Za-z.,\-+ ]/g,'').replace(/(\d)\s+(?=\d)/g,'$1').trim(); vozTarget.dispatchEvent(new Event('input',{bubbles:true})); vozTarget.dispatchEvent(new Event('change',{bubbles:true})); return; }
+  if(single) t=t.replace(/[.。]\s*$/,'');
   if(!cur.trim()) t=t.trimStart().replace(/^./,c=>c.toUpperCase());
   else if(!/\s$/.test(cur) && !/^\s/.test(t)) t=' '+t;
   vozTarget.value=cur+t;
   vozTarget.dispatchEvent(new Event('input',{bubbles:true}));
+  if(single) vozTarget.dispatchEvent(new Event('change',{bubbles:true}));
 }
+// Micrófono en todos los campos de texto (formulario, muestras, firmantes, nueva visita, configuración…)
+const MIC_TYPES=new Set(['','text','search','tel','email']);
+function addMics(root){
+  root.querySelectorAll('input, textarea').forEach(el=>{
+    if(el.closest('.vz')||el.dataset.nomic!==undefined) return;
+    if(el.tagName==='INPUT' && !MIC_TYPES.has((el.getAttribute('type')||'').toLowerCase())) return;
+    const w=document.createElement('div'); w.className='vz';
+    el.parentNode.insertBefore(w,el); w.appendChild(el);
+    const b=document.createElement('button'); b.type='button'; b.className='mic'; b.setAttribute('aria-label','Dictar'); b.textContent='🎤'; w.appendChild(b);
+  });
+}
+let micQ=false;
+new MutationObserver(()=>{ if(micQ) return; micQ=true; requestAnimationFrame(()=>{ micQ=false; addMics(document.body); }); }).observe(document.documentElement,{childList:true,subtree:true});
 function vozUI(on){
   vozOn=on; $('vozBar').classList.toggle('on',on);
   document.querySelectorAll('.mic').forEach(b=>b.classList.toggle('on',on && b.parentNode.querySelector('textarea,input')===vozTarget));
@@ -1754,7 +1825,7 @@ function initFirmas() {
     const card = t.closest('.sigcard'); card.querySelector('.sighead b').textContent = x.rol || (x.comp ? 'Acompañante' : 'Firmante'); card.querySelector('.sighead small').textContent = (x.nombre || (x.comp && x.dni ? 'NIP ' + x.dni : 'sin nombre')) + (x.dni && x.nombre ? ' · ' + x.dni : '');
     persist();
   });
-  const addX = comp => { S.extraFirmas.push({ id: Math.random().toString(36).slice(2), comp, rol: comp ? (CFG.cargo || 'Agente Medioambiental') : '', nombre: '', dni: '' }); renderFirmas(); persist(); setTimeout(() => { const l = document.querySelectorAll('[data-xn]'); l[l.length - 1]?.focus(); }, 50); };
+  const addX = comp => { S.extraFirmas.push({ id: Math.random().toString(36).slice(2), comp, rol: comp ? ((M().custom === 'ama' || !CFG.cargo) ? 'Agente Medioambiental' : CFG.cargo) : '', nombre: '', dni: '' }); renderFirmas(); persist(); setTimeout(() => { const l = document.querySelectorAll('[data-xn]'); l[l.length - 1]?.focus(); }, 50); };
   $('btnAddSig').onclick = () => addX(true);
   $('btnAddOther').onclick = () => addX(false);
   // Firma guardada del técnico (⚙️)
@@ -1766,7 +1837,27 @@ function fillMySig() {
   if (CFG.firma) { im.src = sigUrl(CFG.firma.blob); im.hidden = false; $('btnMySigDel').hidden = false; $('btnMySig').textContent = '✍️ Repetir'; }
   else { im.hidden = true; $('btnMySigDel').hidden = true; $('btnMySig').textContent = '✍️ Firmar'; }
 }
+// En el acta AMA: agentes actuantes (por NIP) y testigos/comparecientes
+function isAgentSigner(s) {
+  if (s.own) return /agente/i.test(CFG.cargo || '');
+  if (s.comp) return !s.extra.rol || /agente/i.test(s.extra.rol);
+  return false;
+}
 async function firmaColsDoc() {
+  if (M().custom === 'ama') {
+    const ag = [], tes = [];
+    for (const s of signers()) {
+      const sg = sigOf(s), refused = s.refused && S.v[s.refused];
+      const img = (!refused && sg) ? { bytes: new Uint8Array(await sg.blob.arrayBuffer()), w: sg.w, h: sg.h } : null;
+      const fecha = (!refused && sg && !sg.saved) ? 'Firmado en dispositivo: ' + fmtDT(sg.ts).slice(0, 16) : '';
+      if (isAgentSigner(s)) { const nip = s.own ? CFG.tip : s.dni; ag.push({ rol: 'Agente Medioambiental actuante', nombre: nip ? 'NIP: ' + nip : (s.nombre || ''), nota: '', img, fecha }); }
+      else {
+        const rol = s.own ? (CFG.cargo || 'Técnico/a') + ' (asiste)' : (s.key === 'interesado' ? 'Testigo / compareciente' : (s.rol || 'Testigo / compareciente'));
+        tes.push({ rol, nombre: s.own ? s.nombre : (s.nombre || ''), nota: refused ? 'Se niega a firmar' : (s.dni ? 'DNI/NIE: ' + s.dni : ''), img, fecha });
+      }
+    }
+    return [...ag, ...tes];
+  }
   const out = [];
   for (const s of signers()) {
     const sg = sigOf(s), refused = s.refused && S.v[s.refused];
@@ -2079,7 +2170,8 @@ const PDF = (() => {
 
     newPage();
     // Título
-    y -= 18; txt(ML, y, (d.title || 'INFORME').toUpperCase(), 'B', 17, COL.pri); y -= 7; hline(ML, PW - MR, y, COL.pri, 1.4); y -= 16;
+    if (d.titleCenter) { const T = (d.title || 'ACTA').toUpperCase(), tw = W(T, 'B', 20); y -= 20; txtC(ML + CW / 2, y, T, 'B', 20, COL.pri); hline(ML + CW / 2 - tw / 2, ML + CW / 2 + tw / 2, y - 3, COL.pri, 1.2); y -= 18; }
+    else { y -= 18; txt(ML, y, (d.title || 'INFORME').toUpperCase(), 'B', 17, COL.pri); y -= 7; hline(ML, PW - MR, y, COL.pri, 1.4); y -= 16; }
     if (d.subtitle) { for (const l of wrap(d.subtitle, 'B', 12, CW)) { txt(ML, y, l, 'B', 12); y -= 15; } }
     if (d.meta) { txt(ML, y, d.meta, 'I', 8.5, COL.gray); y -= 18; }
 
@@ -2169,6 +2261,37 @@ const PDF = (() => {
           y -= h;
         }
       }
+      else if (b.type === 'checks') {
+        const per = b.cols || 4, cw = CW / per;
+        for (let r = 0; r < b.items.length; r += per) {
+          const row = b.items.slice(r, r + per), wl = row.map(it => wrap(it.t, 'B', 9, cw - 16)), nl = Math.max(...wl.map(l => l.length));
+          need(6 + nl * 10.5);
+          row.forEach((it, i) => {
+            const x = ML + i * cw, by = y - 11;
+            rect(x, by - 1, 8, 8, null, COL.pri);
+            if (it.on) op(`1 w ${rgb(COL.pri, 1)} ${n2(x + 1.5)} ${n2(by + 0.5)} m ${n2(x + 6.5)} ${n2(by + 5.5)} l ${n2(x + 6.5)} ${n2(by + 0.5)} m ${n2(x + 1.5)} ${n2(by + 5.5)} l S`);
+            wl[i].forEach((l, k) => txt(x + 12, by - k * 10.5, l, 'B', 9, COL.ink));
+          });
+          y -= 5 + nl * 10.5;
+        }
+        y -= 4;
+      }
+      else if (b.type === 'expline') { need(24); y -= 8; txt(ML, y - 10, b.text, 'B', 11.5, COL.pri); y -= 20; }
+      else if (b.type === 'box') {
+        const pad = 6, lh = 14;
+        let lines = String(b.text || '').trim() ? String(b.text).trim().split(/\n+/).flatMap(pp => wrap(pp.trim(), 'R', 11, CW - 2 * pad)) : [];
+        if (lines.length < 4) lines = lines.concat(Array(4 - lines.length).fill(''));
+        while (lines.length) {
+          if (avail() < lh + 2 * pad) newPage();
+          const n = Math.max(1, Math.min(lines.length, Math.floor((avail() - 2 * pad) / lh)));
+          const chunk = lines.splice(0, n), h = chunk.length * lh + 2 * pad;
+          rect(ML, y - h, CW, h, null, COL.border);
+          chunk.forEach((l, i) => { if (l) txt(ML + pad, y - pad - 10.5 - i * lh, l, 'R', 11); });
+          y -= h;
+        }
+        y -= 8;
+      }
+      else if (b.type === 'pagebreak') newPage();
       else if (b.type === 'line') { y -= (b.before ?? 240) / 20; for (const l of wrap(b.text, b.i ? 'I' : 'R', 10.5, CW)) { need(14); txt(ML, y - 10, l, b.i ? 'I' : 'R', 10.5); y -= 14; } y -= 4; }
     }
 
@@ -2177,7 +2300,10 @@ const PDF = (() => {
     const MM = 2.83465;
     pages.forEach((p, i) => {
       pg = p;
-      if (logoName) { const h = 20 * MM, w = h * H.logo.w / H.logo.h; drawImg(logoName, 10 * MM, PH - 10 * MM - h, w, h); }
+      if (logoName) {
+        const h = 20 * MM, w = h * H.logo.w / H.logo.h; drawImg(logoName, 10 * MM, PH - 10 * MM - h, w, h);
+        if (H.side) { const sl = H.side.filter(Boolean); sl.forEach((l, k) => txt(10 * MM + w + 4 * MM, PH - 10 * MM - h + 2 + (sl.length - 1 - k) * 10, l, k ? 'R' : 'B', k ? 8 : 9, COL.pri)); }
+      }
       const ly = 25 * MM; hline(10 * MM, PW - 10 * MM, ly, COL.gray, 0.5);
       const col = (x, lines) => lines.forEach((l, k) => txt(x, ly - 11 - k * 11, l.t, l.b ? 'B' : 'R', 9, l.c || COL.gray));
       const inst = (H.inst || []).filter(Boolean);
@@ -2398,27 +2524,8 @@ async function stamped(p,n){
 }
 async function canvasBytes(c,type){ const b=await new Promise(r=>c.toBlob(r,type||'image/png',.88)); return new Uint8Array(await b.arrayBuffer()); }
 
-async function buildDoc(opt={}){
-  const m=M(), v=S.v;
-  if(!v.horaFin && m.secciones[0].campos.includes('horaFin')){ v.horaFin=nowHM(); }
+async function mediaBlocks(gp,segs,st,photoTitle){
   const blocks=[];
-  const gp=geoPhotos(), segs=S.track.segs.filter(s=>s.length), st=trackStats(segs);
-  const ref = st.start ? {lat:st.start[0],lon:st.start[1]} : (gp[0] ? {lat:gp[0].lat,lon:gp[0].lon} : null);
-
-  m.secciones.forEach((s,i)=>{
-    const cs=s.campos.map(campo);
-    const areas=cs.filter(c=>c.t==='area'), rest=cs.filter(c=>c.t!=='area'&&c.t!=='check');
-    const rows=rest.map(c=>[c.l, c.t==='date'?fmtD(v[c.k]):(v[c.k]||'')]);
-    if(i===0 && ref) rows.push(['Coordenadas de referencia', `${ref.lat.toFixed(6)}, ${ref.lon.toFixed(6)} · ${utmTxt(ref.lat,ref.lon)}`]);
-    const filled=rows.some(r=>String(r[1]).trim()) || areas.some(a=>(v[a.k]||'').trim());
-    if(!filled) return;
-    blocks.push({type:'h',text:s.t});
-    if(rest.length===0 && areas.length===1){ blocks.push({type:'p',text:v[areas[0].k]}); return; }
-    blocks.push({type:'kv',rows:[...rows, ...areas.map(a=>[a.l, v[a.k]||''])]});
-  });
-  blocks.push({type:'h',text:m.obs}, {type:'p',text:S.obs,empty:'Sin observaciones.'});
-  m.extras.forEach(x=>{ if((v[x.k]||'').trim()) blocks.push({type:'h',text:x.l},{type:'p',text:v[x.k]}); });
-
   // Recorrido / croquis
   const cv=document.createElement('canvas'); cv.width=1600; cv.height=1000;
   const sk=(segs.flat().length||gp.length) ? await drawSketch(cv,segs,gp,{big:true}) : null;
@@ -2440,7 +2547,7 @@ async function buildDoc(opt={}){
 
   // Reportaje fotográfico
   if(S.photos.length){
-    blocks.push({type:'h',text:'Reportaje fotográfico'});
+    blocks.push({type:'h',text:photoTitle});
     for(let i=0;i<S.photos.length;i++){
       const p=S.photos[i];
       busy(true,`Preparando foto ${i+1} de ${S.photos.length}…`);
@@ -2455,18 +2562,28 @@ async function buildDoc(opt={}){
     }
   }
 
-  blocks.push({type:'line',text:`En ${v.municipio||'……………………'}, a ${fmtLarga(v.fecha)||'……………………'}.`,align:'left',before:360});
+  return blocks;
+}
+async function closingBlocks(opt){
+  const v=S.v, blocks=[];
   const fcols=await firmaColsDoc();
-  const others=signers().filter(s=>!s.own);
-  const signedOthers=others.filter(s=>(S.firmas||{})[s.key] && !(s.refused&&v[s.refused]));
+  // Quién hace constar: el usuario. En el acta AMA, si el usuario no es agente, el agente acompañante que levanta el acta.
+  const meAgent=/agente/i.test(CFG.cargo||'');
+  const agComp=signers().find(s=>s.comp&&isAgentSigner(s));
+  const by=(!meAgent && M().custom==='ama' && agComp) ? agComp : null;
+  const autoridad = by ? true : meAgent;
+  const who = by
+    ? [by.extra.nombre||'', (by.rol||'Agente Medioambiental')+(by.dni?' con NIP '+by.dni:'')].filter(x=>x.trim()).join(', ')
+    : [(CFG.idMode!=='nip'&&CFG.nombre)?CFG.nombre:'', (CFG.cargo||'')+(CFG.tip?' con NIP '+CFG.tip:'')].filter(x=>x.trim()).join(', ');
+  const others=signers().filter(s=> by ? s.key!==by.key : !s.own);
+  const signedOthers=others.filter(s=>sigOf(s) && !(s.refused&&v[s.refused]));
   const refusedOthers=others.filter(s=>s.refused&&v[s.refused]);
   if(CFG.fe!==false && (signedOthers.length||refusedOthers.length)){
-    const who=[(CFG.idMode!=='nip'&&CFG.nombre)?CFG.nombre:'', (CFG.cargo||'')+(CFG.tip?' con NIP '+CFG.tip:'')].filter(x=>x.trim()).join(', ');
-    let t=`El/La funcionario/a que suscribe${who?', '+who:''}, en el ejercicio de sus funciones, DA FE de que`;
-    const ident=s=>s.comp ? (s.extra.nombre ? `${s.extra.nombre} (${s.rol}${s.dni?', '+s.dni:''})` : `${s.rol} con NIP ${s.dni||'—'}`) : `${s.nombre||s.rol}${s.dni?' ('+s.dni+')':''}`;
+    let t=`${autoridad?'El/La agente':'El/La funcionario/a'} que suscribe${who?', '+who:''}, HACE CONSTAR${autoridad?' COMO AGENTE DE LA AUTORIDAD':''} que`;
+    const ident=s=>s.own ? (myIdent()||CFG.cargo||'el/la técnico/a') : s.comp ? (s.extra.nombre ? `${s.extra.nombre} (${s.rol}${s.dni?', '+s.dni:''})` : `${s.rol} con NIP ${s.dni||'—'}`) : `${s.nombre||s.rol}${s.dni?' ('+s.dni+')':''}`;
     if(signedOthers.length) t+=` las firmas manuscritas de ${signedOthers.map(ident).join(', ')} han sido realizadas en su presencia sobre el dispositivo electrónico, en la fecha y hora indicadas bajo cada una, previa identificación de los firmantes`;
-    if(refusedOthers.length) t+=`${signedOthers.length?'; y de que':''} ${refusedOthers.map(s=>s.nombre||s.rol).join(', ')} se ha${refusedOthers.length>1?'n':''} negado a firmar tras serle${refusedOthers.length>1?'s':''} ofrecido el documento`;
-    blocks.push({type:'h',text:'Diligencia de fe pública'},{type:'p',text:t+'.'});
+    if(refusedOthers.length) t+=`${signedOthers.length?'; y que':''} ${refusedOthers.map(s=>s.nombre||s.rol).join(', ')} se ha${refusedOthers.length>1?'n':''} negado a firmar tras serle${refusedOthers.length>1?'s':''} ofrecido el documento`;
+    blocks.push({type:'h',text:'Diligencia'},{type:'p',text:t+'.'});
   }
   blocks.push({type:'firmas',cols:fcols});
   if(opt.cert){
@@ -2475,12 +2592,71 @@ async function buildDoc(opt={}){
       {type:'p',text:`Documento firmado electrónicamente por ${c.name}${c.nif?' (NIF '+c.nif+')':''} mediante certificado electrónico${c.issuer?' emitido por '+c.issuer:''}, el ${fmtDT(opt.when).slice(0,16)}. `+(opt.pdf?'La firma (formato PAdES) está incrustada en este PDF y puede verificarse en https://valide.redsara.es, con AutoFirma o con Adobe Acrobat Reader.':'Formato de firma: CAdES (archivo .csig adjunto), verificable en https://valide.redsara.es o con AutoFirma.')});
   }
 
+  return blocks;
+}
+async function amaBlocks(opt,gp,segs,st){
+  const v=S.v, B=[], sel=Array.isArray(v.ambitos)?v.ambitos:[];
+  B.push({type:'checks',cols:4,items:AMBITOS_AMA.map(t=>({t:t==='Otros'&&v.ambitoOtro?'Otros: '+v.ambitoOtro:t,on:sel.includes(t)}))});
+  B.push({type:'expline',text:'CASO/EXPTE: '+(v.expediente||'…………………')});
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v.fecha||'');
+  const ag=signers().filter(s=>isAgentSigner(s)).map(s=>s.own?CFG.tip:s.dni).filter(Boolean);
+  B.push({type:'p',text:`El día ${m?+m[3]:'……'} de ${m?MESES[m[2]-1]:'…………'} de ${m?m[1]:'20……'}, a las ${v.horaIni||'……'} horas, se personan en ${v.paraje||'…………………'} en el t.m. de ${v.municipio||'…………………'} de la provincia de ${v.provincia||'…………'} los miembros del Cuerpo de Agentes Medioambientales de Castilla-La Mancha${ag.length?' con NIP '+ag.join(', '):''}, en calidad de Agentes de la Autoridad.`});
+  const ref=st.start?{lat:st.start[0],lon:st.start[1]}:(gp[0]?{lat:gp[0].lat,lon:gp[0].lon}:null);
+  if(ref) B.push({type:'p',text:`Coordenadas de referencia (ETRS89): ${utmTxt(ref.lat,ref.lon)} (${ref.lat.toFixed(6)}, ${ref.lon.toFixed(6)}).`});
+  if(v.titular||v.cif) B.push({type:'p',text:`Empresa con razón social / Titular: ${v.titular||'—'}${v.cif?', CIF: '+v.cif:''}.`});
+  if(v.domicilio||v.telTit) B.push({type:'p',text:`Domicilio social: ${v.domicilio||'—'}${v.telTit?', Telf.: '+v.telTit:''}.`});
+  if(v.intNombre) B.push({type:'p',text:`Compareciente: ${v.intNombre}${v.intDni?', con DNI/NIE '+v.intDni:''}${v.intCalidad?', en calidad de '+v.intCalidad.toLowerCase():''}.`});
+  B.push({type:'p',text:'Como resultado de la actuación-inspección se ponen de manifiesto los siguientes hechos:'});
+  B.push({type:'box',text:S.obs||''});
+  const mu=(Array.isArray(v.muestras)?v.muestras:[]).filter(x=>(x.tipo||x.precinto||'').trim());
+  if(mu.length){
+    B.push({type:'p',text:'Como resultado de la actuación-inspección descrita se efectúa la recogida de las siguientes muestras:'});
+    B.push({type:'table',head:['Nº','Tipo (cadáver, sustancias, cebos, objetos, etc.)','Nº precinto','X UTM (ETRS89)','Y UTM (ETRS89)'],widths:[500,3970,1700,1450,1450],rows:mu.map((x,i)=>[String(i+1),x.tipo||'',x.precinto||'',x.x||'',x.y||''])});
+    if(v.remite){ const r=v.remite.trim(), dest=/^el\s/i.test(r)?'al '+r.slice(3):'a '+r; B.push({type:'p',text:`Se remite/n la/s muestra/s ${dest}, manteniéndose la cadena de custodia preceptiva.`}); }
+  }
+  if((v.manif||'').trim()) B.push({type:'p',text:'El testigo/compareciente manifiesta: '+v.manif.trim()});
+  B.push({type:'p',text:'Para que conste, se extiende la presente acta instruida en aplicación de la normativa vigente aplicable, por triplicado y haciendo entrega de uno de los ejemplares al compareciente.'});
+  B.push({type:'p',text:`A este acta ${S.photos.length?'SÍ':'NO'} se adjunta anexo fotográfico.`});
+  B.push({type:'line',text:`En ${v.municipio||'……………………'}, a ${fmtLarga(v.fecha)||'……………………'}.`,align:'left',before:200});
+  B.push(...await closingBlocks(opt));
+  const med=await mediaBlocks(gp,segs,st,'Anexo fotográfico');
+  if(med.length) B.push({type:'pagebreak'},...med);
+  return B;
+}
+async function buildDoc(opt={}){
+  const m=M(), v=S.v;
+  if(!v.horaFin && m.secciones[0].campos.includes('horaFin')){ v.horaFin=nowHM(); }
+  const blocks=[];
+  const gp=geoPhotos(), segs=S.track.segs.filter(s=>s.length), st=trackStats(segs);
+  const ref = st.start ? {lat:st.start[0],lon:st.start[1]} : (gp[0] ? {lat:gp[0].lat,lon:gp[0].lon} : null);
+  if(m.custom==='ama') blocks.push(...await amaBlocks(opt,gp,segs,st));
+  else {
+  m.secciones.forEach((s,i)=>{
+    const cs=s.campos.map(campo);
+    const areas=cs.filter(c=>c.t==='area'), rest=cs.filter(c=>c.t!=='area'&&c.t!=='check');
+    const rows=rest.map(c=>[c.l, c.t==='date'?fmtD(v[c.k]):(v[c.k]||'')]);
+    if(i===0 && ref) rows.push(['Coordenadas de referencia', `${ref.lat.toFixed(6)}, ${ref.lon.toFixed(6)} · ${utmTxt(ref.lat,ref.lon)}`]);
+    const filled=rows.some(r=>String(r[1]).trim()) || areas.some(a=>(v[a.k]||'').trim());
+    if(!filled) return;
+    blocks.push({type:'h',text:s.t});
+    if(rest.length===0 && areas.length===1){ blocks.push({type:'p',text:v[areas[0].k]}); return; }
+    blocks.push({type:'kv',rows:[...rows, ...areas.map(a=>[a.l, v[a.k]||''])]});
+  });
+  blocks.push({type:'h',text:m.obs}, {type:'p',text:S.obs,empty:'Sin observaciones.'});
+  m.extras.forEach(x=>{ if((v[x.k]||'').trim()) blocks.push({type:'h',text:x.l},{type:'p',text:v[x.k]}); });
+
+  blocks.push(...await mediaBlocks(gp,segs,st,'Reportaje fotográfico'));
+
+  blocks.push({type:'line',text:`En ${v.municipio||'……………………'}, a ${fmtLarga(v.fecha)||'……………………'}.`,align:'left',before:360});
+  blocks.push(...await closingBlocks(opt));
+  }
+
   const logo = CFG.logo ? {bytes:new Uint8Array(await CFG.logo.blob.arrayBuffer()),w:CFG.logo.w,h:CFG.logo.h,ext:'png'}
     : {bytes:Uint8Array.from(atob(LOGO_JCCM.b64),c=>c.charCodeAt(0)),w:LOGO_JCCM.w,h:LOGO_JCCM.h,ext:'png'};
   const model={
-    header:{logo,inst:[CFG.org2,CFG.org3],dir:CFG.dir,cp:CFG.cp,tel:CFG.tel,mail:CFG.mail,web:'www.castillalamancha.es'},
-    title:m.titulo, subtitle:(v.asunto||'').trim(),
-    meta:`Documento generado el ${fmtDT(Date.now()).slice(0,16)}${myIdent()?' por '+myIdent():''}`,
+    header:{logo,inst:[CFG.org2,CFG.org3],dir:CFG.dir,cp:CFG.cp,tel:CFG.tel,mail:CFG.mail,web:'www.castillalamancha.es',side:m.custom==='ama'?[CFG.org2||'Consejería de Desarrollo Sostenible',CFG.org3?CFG.org3.replace(/\s+de\s+[A-ZÁÉÍÓÚ][\wáéíóú]+$/,''):'Delegación Provincial']:null},
+    title:m.titulo, subtitle:m.custom==='ama'?'':(v.asunto||'').trim(), titleCenter:m.custom==='ama',
+    meta:m.custom==='ama'?'':`Documento generado el ${fmtDT(Date.now()).slice(0,16)}${myIdent()?' por '+myIdent():''}`,
     footer:`${m.titulo}${v.expediente?' · Exp. '+v.expediente:''}`, author:CFG.nombre, blocks };
   return opt.model ? model : buildDocx(model);
 }
@@ -2506,7 +2682,6 @@ async function genSigned(pwd){
   }catch(e){ busy(false); $('pwdErr').textContent=PKI.errMsg(e); $('pwdIn').value=''; $('pwdIn').focus(); }
 }
 $('btnDoc').onclick=async()=>{
-  if(S.tipo==='denuncia' && !(S.v.denDni||'').trim() && !$('btnDoc').dataset.ok){ $('btnDoc').dataset.ok='1'; setTimeout(()=>delete $('btnDoc').dataset.ok,6000); toast('Falta el DNI/NIE del denunciado/a. Pulsa otra vez para generar igualmente.',5000); document.getElementById('v_denDni')?.focus(); return; }
   openGen();
 };
 function genFmt(){ return document.querySelector('input[name=gfmt]:checked').value; }
@@ -2623,7 +2798,7 @@ async function deliver(blob,name,what){
 // VISTAS: inicio, lista de visitas y formulario
 // =====================================================================
 function show(view) { document.body.classList.remove('v-home', 'v-list', 'v-form'); document.body.classList.add('v-' + view); scrollTo(0, 0); }
-const TIPO_DESC = { informe: 'Informe técnico de la visita', acta_insp: 'Inspección con interesado', acta_ini: 'Inicio de obra o actuación', acta_fin: 'Final de obra o actuación', denuncia: 'Boletín de denuncia' };
+const TIPO_DESC = { informe: 'Informe técnico de la visita', acta_insp: 'Inspección con interesado', acta_ini: 'Inicio de obra o actuación', acta_fin: 'Final de obra o actuación', acta_ama: 'Agentes Medioambientales' };
 function itemHtml(x) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x.fecha || '');
   const st = x.status || 'Borrador', ok = st !== 'Borrador';
@@ -2671,10 +2846,10 @@ async function openVisit(id) {
 // ----- Nueva visita: tipo de documento + objeto → formulario con los datos base
 let NTIPO = 'informe';
 function openNew() {
-  NTIPO = CFG.lastTipo && MODELOS[CFG.lastTipo] ? CFG.lastTipo : 'informe';
-  $('nTipos').innerHTML = Object.entries(MODELOS).map(([k, m]) => `<button class="tcard ${k === NTIPO ? 'on' : ''}" data-t="${k}" type="button"><b>${m.nombre}</b><small>${TIPO_DESC[k] || ''}</small></button>`).join('');
+  NTIPO = CFG.lastTipo && MODELOS[CFG.lastTipo] && !MODELOS[CFG.lastTipo].oculto ? CFG.lastTipo : 'informe';
+  $('nTipos').innerHTML = Object.entries(MODELOS).filter(([k, m]) => !m.oculto).map(([k, m]) => `<button class="tcard ${k === NTIPO ? 'on' : ''}" data-t="${k}" type="button"><b>${m.nombre}</b><small>${TIPO_DESC[k] || ''}</small></button>`).join('');
   $('nObj').value = ''; $('nMun').value = ''; $('nPar').value = ''; $('nErr').textContent = '';
-  $('newSheet').classList.add('on'); setTimeout(() => $('nObj').focus(), 80);
+  $('newSheet').classList.add('on'); setTimeout(() => { if (!$('newSheet').contains(document.activeElement)) $('nObj').focus(); }, 80);
 }
 async function startNew() {
   const obj = $('nObj').value.trim();
@@ -2686,6 +2861,7 @@ async function startNew() {
   S.v.asunto = first.length > 110 ? first.slice(0, 107).replace(/\s+\S*$/, '') + '…' : first;
   if (NTIPO === 'acta_ini' || NTIPO === 'acta_fin') S.v.actuacion = obj; else if (NTIPO !== 'denuncia') S.v.objeto = obj;
   S.v.municipio = $('nMun').value.trim(); S.v.paraje = $('nPar').value.trim();
+  if (NTIPO === 'acta_ama') { const pm = /Provincial de ([^,]+)$/i.exec(CFG.org3 || ''); S.v.provincia = pm ? pm[1].trim() : ''; S.v.muestras = []; S.v.ambitos = []; S.v.remite = CFG.laboratorio || LAB_DEFECTO; }
   $('newSheet').classList.remove('on');
   await persistNow(); renderAll(); show('form');
   toast(`${MODELOS[NTIPO].nombre}: visita iniciada`);
