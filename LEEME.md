@@ -22,6 +22,9 @@ Esta carpeta es la app completa. Publicada en una web propia (HTTPS) funciona **
 2. Indica el centro (coordenadas, «Mi posición» o «Visita actual»), el radio y el detalle → **Descargar zona**.
 3. Opcional: **Cargar ortofoto propia** (JPG + .jgw, KMZ o GeoTIFF).
 
+## Carpeta de archivo (Android)
+En ⚙️ → **Archivo de visitas → Elegir carpeta**, entra en **Documentos** (o en la tarjeta de memoria) y pulsa «Usar esta carpeta» → «Permitir». La app crea dentro `VisitasCampo` y guarda cada visita en una subcarpeta «fecha término municipal» con `visita.json`, fotos, firmas, `recorrido.kml` y los documentos generados. Si cambias de móvil, copia la carpeta y usa «Revisar visitas → Recuperar visitas desde la carpeta».
+
 ## Actualizar la app
 Sustituye `index.html` por la nueva versión y cambia el texto `VERSION` dentro de `sw.js` (por ejemplo, `visitas-v4`). Los datos guardados en los móviles no se pierden.
 
