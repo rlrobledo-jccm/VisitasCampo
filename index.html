@@ -206,7 +206,6 @@ body.v-home header, body.v-home main, body.v-home .bar, body.v-list header, body
   <section>
     <h2>Fotografías <span class="n" id="nFotos">0</span></h2>
     <div id="photos"></div>
-    <label class="chk"><input type="checkbox" id="f_stamp" checked> Sellar fecha, hora y coordenadas sobre cada foto</label>
   </section>
 
   <section id="secFirmas">
@@ -2470,7 +2469,6 @@ function renderPhotos(){
     box.appendChild(el);
   });
 }
-$('f_stamp').onchange=e=>{ S.stamp=e.target.checked; persist(); };
 
 // =====================================================================
 // CONFIGURACIÓN (membrete y técnico)
@@ -2551,15 +2549,12 @@ async function mediaBlocks(gp,segs,st,photoTitle){
     for(let i=0;i<S.photos.length;i++){
       const p=S.photos[i];
       busy(true,`Preparando foto ${i+1} de ${S.photos.length}…`);
-      const coords=p.lat!=null?`${p.lat.toFixed(6)}, ${p.lon.toFixed(6)} · ${utmTxt(p.lat,p.lon)}${p.gpsSrc?` (${GPS_LBL[p.gpsSrc]})`:''}`:'sin coordenadas';
-      blocks.push({type:'photo',n:i+1,bytes:await stamped(p,i+1),w:p.w,h:p.h,comment:p.comment,metaLine:`${fmtDT(p.ts)}   ·   ${coords}`});
+      // Fecha, hora y localización solo en el pie: «Foto N. dd/mm/aaaa hh:mm · UTM 30N X … Y …. Descripción»
+      const meta=`${fmtDT(p.ts).slice(0,16)}${p.lat!=null?' · '+utmTxt(p.lat,p.lon):''}`;
+      const desc=(p.comment||'').trim();
+      blocks.push({type:'photo',n:i+1,bytes:new Uint8Array(await p.blob.arrayBuffer()),w:p.w,h:p.h,comment:meta+'.'+(desc?' '+desc:'')});
     }
-    if(gp.length){
-      blocks.push({type:'h',text:'Anexo · Localización de las fotografías'});
-      blocks.push({type:'table',head:['Nº','Fecha y hora','Latitud','Longitud','X UTM','Y UTM','Mapa'],widths:[500,2000,1300,1300,1300,1450,1220],
-        rows:gp.map(p=>{ const u=toUTM(p.lat,p.lon); return [String(p.n),fmtDT(p.ts),p.lat.toFixed(6),p.lon.toFixed(6),Math.round(u.x)+'',Math.round(u.y)+'',{text:'Ver',url:`https://www.google.com/maps?q=${p.lat.toFixed(6)},${p.lon.toFixed(6)}`}]; })});
-      blocks.push({type:'line',text:`Coordenadas geográficas en ETRS89 (equivalente a WGS84). UTM huso ${toUTM(gp[0].lat,gp[0].lon).zone}N.`,i:true,before:80});
-    }
+    if(gp.length) blocks.push({type:'line',text:'Coordenadas UTM en ETRS89.',i:true,before:40});
   }
 
   return blocks;
@@ -2902,7 +2897,7 @@ function initViews() {
   show('home'); renderHome();
 }
 
-function renderAll(){ renderTabs(); renderForm(); renderPhotos(); renderTrack(); renderFirmas(); chip(); $('f_stamp').checked=S.stamp!==false; }
+function renderAll(){ renderTabs(); renderForm(); renderPhotos(); renderTrack(); renderFirmas(); chip(); }
 
 // ----- App instalable (solo en la versión publicada en web propia)
 let installEvt=null;
