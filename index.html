@@ -3142,14 +3142,25 @@ function geomRows(GM){
 }
 function kmlPolys(){ return S.geoms.filter(g=>g.pts.length>2).map(g=>{ const i=S.geoms.indexOf(g), m=geomMeasure(g.pts); return {name:`${geomLetter(i)}${g.name?' — '+g.name:''}`, desc:`Superficie ${fmtArea(m.area)} · perímetro ${fmtLen(m.perim)}`, pts:g.pts}; }); }
 async function mediaBlocks(gp,segs,st,photoTitle){
-  return [...await mapBlocks(gp,segs,st), ...await photoBlocks(gp,photoTitle)];
+  return [...await safeMap(gp,segs,st), ...await photoBlocks(gp,photoTitle)];
+}
+// El croquis nunca debe impedir generar el documento: si falla o tarda demasiado, se repite sin pedir ortofoto al IGN y, si aún falla, se omite avisando
+let MAP_LIVE=true;
+async function safeMap(gp,segs,st){
+  const tryOnce=(ms)=>Promise.race([mapBlocks(gp,segs,st), new Promise((_,rej)=>setTimeout(()=>rej(new Error('tiempo agotado')),ms))]);
+  try{ MAP_LIVE=true; return await tryOnce(30000); }
+  catch(e){ console.error('croquis',e);
+    try{ MAP_LIVE=false; const r=await tryOnce(30000); toast('Croquis generado sin ortofoto en línea ('+(e.message||e)+')',5000); return r; }
+    catch(e2){ console.error('croquis',e2); toast('No se pudo dibujar el croquis ('+(e2.message||e2)+'). El documento se genera sin él.',6000); return []; }
+    finally{ MAP_LIVE=true; }
+  }
 }
 async function mapBlocks(gp,segs,st){
   const blocks=[];
   // Recorrido / croquis
   const cv=document.createElement('canvas'); cv.width=1600; cv.height=1000;
   const GM=S.geoms.filter(g=>g.pts.length>2);
-  const sk=(segs.flat().length||gp.length||GM.length) ? await drawSketch(cv,segs,gp,{big:true,geoms:S.geoms,refs:S.refs,live:true}) : null;
+  const sk=(segs.flat().length||gp.length||GM.length) ? await drawSketch(cv,segs,gp,{big:true,geoms:S.geoms,refs:S.refs,live:MAP_LIVE}) : null;
   if(segs.flat().length>1 || gp.length>1 || GM.length || (sk&&sk.hasBg)){
     blocks.push({type:'h',text: segs.flat().length>1 ? 'Recorrido realizado' : 'Croquis de situación'});
     if(segs.flat().length>1){
@@ -3171,7 +3182,7 @@ async function mapBlocks(gp,segs,st){
       const gpts=GM.flatMap(g=>g.pts), allp=[...segs.flat().map(p=>[p[0],p[1]]),...gp.map(p=>[p.lat,p.lon]),...gpts];
       if(span(allp) > 3*Math.max(span(gpts),60)){
         const cv2=document.createElement('canvas'); cv2.width=1600; cv2.height=1000;
-        const sk2=await drawSketch(cv2,segs,gp,{big:true,geoms:S.geoms,refs:S.refs,live:true,fit:gpts,minSpan:120});
+        const sk2=await drawSketch(cv2,segs,gp,{big:true,geoms:S.geoms,refs:S.refs,live:MAP_LIVE,fit:gpts,minSpan:120});
         blocks.push({type:'img',bytes:await canvasBytes(cv2,'image/jpeg'),ext:'jpeg',w:1600,h:1000,maxWcm:16,maxHcm:9,
           caption:`Detalle de ${GM.length>1?'los polígonos':'el polígono'} con la numeración de los vértices.`+(sk2&&sk2.pnoa?' Fondo: ortofoto PNOA máxima actualidad, CC BY 4.0 scne.es.':'')});
       }
@@ -3197,10 +3208,11 @@ async function photoBlocks(gp,photoTitle){
       // Fecha, hora y localización solo en el pie: «Foto N. dd/mm/aaaa hh:mm · UTM 30N X … Y …. Descripción»
       const meta=`${fmtDT(p.ts).slice(0,16)}${p.lat!=null?' · '+utmTxt(p.lat,p.lon):''}`;
       const desc=(p.comment||'').trim();
-      photos.push({n:i+1,bytes:new Uint8Array(await p.blob.arrayBuffer()),w:p.w,h:p.h,comment:meta+'.'+(desc?' '+desc:'')});
+      let bytes; try{ bytes=new Uint8Array(await p.blob.arrayBuffer()); }catch(e){ console.error('foto',i+1,e); toast(`No se pudo leer la foto ${i+1}; se omite`,5000); continue; }
+      photos.push({n:i+1,bytes,w:p.w,h:p.h,comment:meta+'.'+(desc?' '+desc:'')});
     }
     if(gp.length) blocks.push({type:'line',text:'Coordenadas UTM en ETRS89.',i:true,before:0,keep:true});
-    blocks.push({type:'photogrid',photos});
+    if(photos.length) blocks.push({type:'photogrid',photos}); else blocks.length=0;
   }
 
   return blocks;
@@ -3287,7 +3299,7 @@ async function buildDoc(opt={}){
   m.extras.forEach(x=>{ if((v[x.k]||'').trim()) blocks.push({type:'h',text:x.l},{type:'p',text:v[x.k]}); });
 
   // Recorrido/croquis → lugar y fecha → firmas → anexo fotográfico
-  blocks.push(...await mapBlocks(gp,segs,st));
+  blocks.push(...await safeMap(gp,segs,st));
   if(S.photos.length) blocks.push({type:'p',text:`Se adjunta anexo fotográfico con ${S.photos.length} fotografía${S.photos.length>1?'s':''}.`});
   blocks.push({type:'line',text:`En ${v.municipio||'……………………'}, a ${fmtLarga(v.fecha)||'……………………'}.`,align:'left',before:360,keep:true});
   blocks.push(...await closingBlocks(opt));
@@ -3378,7 +3390,7 @@ async function genPdf(pw){
     await afterDoc(pw?'PDF firmado':'PDF generado',{name:pname,blob:pblob});
     busy(false); $('genSheet').classList.remove('on'); $('genPwd').value='';
     await deliver(pblob, pname, pw?'PDF firmado':'PDF');
-  }catch(e){ busy(false); console.error(e); $('genErr').textContent=PKI.errMsg(e); }
+  }catch(e){ busy(false); console.error(e); const msg=PKI.errMsg(e); $('genErr').textContent=msg; toast('Error al generar el PDF: '+msg,8000); }
 }
 let PWD_MODE='sign', PENDING_CERT=null;
 $('pwdForm').onsubmit=async e=>{ e.preventDefault(); const pw=$('pwdIn').value; if(!pw){ $('pwdErr').textContent='Escribe la contraseña'; return; }
