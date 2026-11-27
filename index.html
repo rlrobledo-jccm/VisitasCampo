@@ -2237,7 +2237,7 @@ async function archiveToFolder(V, docs = []) {
   const sigs = Object.entries(V.firmas || {});
   if (sigs.length) { const sdir = await dir.getDirectoryHandle('firmas', { create: true }); for (const [k, f] of sigs) await writeFile(sdir, `${k}.png`, f.blob); }
   const segs = (V.track.segs || []).filter(s => s.length > 1), gp = V.photos.map((p, i) => ({ ...p, n: i + 1 })).filter(p => p.lat != null);
-  const polys = V === S ? kmlPolys() : [];
+  const polys = kmlPolys(V);
   if (segs.length || gp.length || polys.length) await writeFile(dir, 'recorrido.kml', buildKml({ name: V.v.asunto || 'Visita', desc: [V.v.municipio, V.v.paraje].filter(Boolean).join(' · '), segs, photos: gp.map(p => ({ n: p.n, lat: p.lat, lon: p.lon, ts: p.ts, when: fmtDT(p.ts), comment: p.comment })), polys }));
   for (const d of docs) await writeFile(dir, d.name, d.blob);
   // Si la visita estaba en otra carpeta (cambió fecha o municipio), se trasladan sus documentos y se borra la antigua
@@ -3150,7 +3150,7 @@ function geomRows(GM){
   return GM.map(g=>{ const i=S.geoms.indexOf(g), m=geomMeasure(g.pts), c=geomCentroid(g.pts);
     return [`Polígono ${geomLetter(i)}${g.name?': '+g.name:''}`, `Superficie ${fmtArea(m.area)} · perímetro ${fmtLen(m.perim)} · ${g.pts.length} vértices · centro ${utmTxt(c[0],c[1])}`]; });
 }
-function kmlPolys(){ return S.geoms.filter(g=>g.pts.length>2).map(g=>{ const i=S.geoms.indexOf(g), m=geomMeasure(g.pts); return {name:`${geomLetter(i)}${g.name?' — '+g.name:''}`, desc:`Superficie ${fmtArea(m.area)} · perímetro ${fmtLen(m.perim)}`, pts:g.pts}; }); }
+function kmlPolys(V=S){ const G=V.geoms||[]; return G.filter(g=>g.pts.length>2).map(g=>{ const i=G.indexOf(g), m=geomMeasure(g.pts); return {name:`${geomLetter(i)}${g.name?' — '+g.name:''}`, desc:`Superficie ${fmtArea(m.area)} · perímetro ${fmtLen(m.perim)}`, pts:g.pts}; }); }
 async function mediaBlocks(gp,segs,st,photoTitle){
   return [...await safeMap(gp,segs,st), ...await photoBlocks(gp,photoTitle)];
 }
@@ -3553,22 +3553,37 @@ async function startNew() {
   toast(`${MODELOS[NTIPO].nombre}: visita iniciada`);
 }
 // ----- Cerrar visita: se guarda en el móvil y, si hay carpeta, como archivos
+// Copias en la carpeta: de una en una (nunca dos escribiendo a la vez) y con tiempo máximo
+let ARCH_Q = Promise.resolve();
+async function saveFolderOf(V) { // solo actualiza la carpeta en el registro, sin pisar cambios posteriores
+  if (S.id === V.id && S !== V) S.folder = V.folder;
+  if (S === V) return saveVisitRecord(V);
+  const R = await Store.getVisit(V.id); if (R) { R.folder = V.folder; await Store.putVisit(R); }
+}
+function queueArchive(V, docs) {
+  const run = ARCH_Q.then(() => withTimeout(archiveToFolder(V, docs), 90000, 'la carpeta no responde'));
+  ARCH_Q = run.catch(() => { }); return run;
+}
 async function closeVisit() {
-  const root = await Folder.ready(true); // el permiso se pide dentro del toque
+  let root = null; try { root = await withTimeout(Folder.ready(true), 5000); } catch (e) { console.warn('carpeta', e); } // el permiso se pide dentro del toque
   if (S.track.rec) { S.track.rec = false; keepAwake(false); }
-  await persistNow();
-  if (root && S.id) {
-    try { busy(true, 'Guardando en la carpeta…'); const where = await archiveToFolder(S); await persistNow(); busy(false); if (where) toast('Guardada en ' + where, 3500); }
-    catch (e) { busy(false); toast('No se pudo guardar en la carpeta: ' + (e.message || e), 5000); }
-  }
+  const V = S;
+  try { await withTimeout(persistNow(), 15000, 'el almacenamiento no responde'); } catch (e) { toast('No se pudo guardar en el móvil: ' + (e.message || e), 6000); }
+  // Se vuelve al inicio enseguida; la copia en la carpeta sigue en segundo plano
   urls.forEach(u => URL.revokeObjectURL(u)); urls.clear();
   S = blank(); show('home'); renderHome();
+  if (root && V.id) {
+    toast('Guardando copia en la carpeta…', 2500);
+    queueArchive(V).then(async where => { try { await saveFolderOf(V); } catch (e) { } if (where) toast('Guardada en ' + where, 3500); })
+      .catch(e => toast('No se pudo guardar en la carpeta: ' + (e.message || e), 6000));
+  } else toast('Visita guardada en el móvil', 2500);
 }
 // ----- Tras generar un documento: estado de la visita + copia en la carpeta
 async function afterDoc(status, doc) {
   S.status = status; S.docs = [...(S.docs || []), { name: doc.name, ts: Date.now() }];
   await persistNow();
-  try { const where = await withTimeout(archiveToFolder(S, [doc]), 30000, 'la carpeta no responde'); if (where) { await persistNow(); setTimeout(() => toast('Copia guardada en ' + where, 3500), 2900); } }
+  const V = S;
+  try { const where = await queueArchive(V, [doc]); if (where) { await saveFolderOf(V); setTimeout(() => toast('Copia guardada en ' + where, 3500), 2900); } }
   catch (e) { console.error(e); }
 }
 function initViews() {
