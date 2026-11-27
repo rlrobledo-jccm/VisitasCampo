@@ -367,7 +367,12 @@ body.v-home header, body.v-home main, body.v-home .bar, body.v-list header, body
 </div></div>
 
 <div id="toast"></div>
-<div class="busy" id="busy"><div id="busyTxt">Generando…</div></div>
+<div class="busy" id="busy"><div id="busyTxt">Generando…</div><button class="btn sm" id="busyHide" type="button" hidden>Ocultar</button></div>
+<div class="sheet sig" id="readySheet"><div class="pan sigpan" style="max-width:480px">
+  <h3 style="margin:0 0 6px">✅ Documento listo</h3>
+  <div class="hint" id="rdName" style="word-break:break-all"></div>
+  <div class="btns" style="justify-content:flex-end;margin-top:14px"><button class="btn sm" id="rdClose" type="button">Cerrar</button><button class="btn sm" id="rdShare" type="button">↗️ Compartir</button><button class="btn sm pri" id="rdDl" type="button">⬇️ Descargar</button></div>
+</div></div>
 
 <script>
 // ===== Lector EXIF mínimo: fecha original y GPS =====
@@ -1148,7 +1153,12 @@ const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 const slug = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'_').replace(/^_|_$/g,'').slice(0,50);
 
 function toast(t,ms){ const el=$('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('on'),ms||2800); }
-function busy(on,t){ $('busy').classList.toggle('on',on); if(t) $('busyTxt').textContent=t; }
+let BUSY_T=0;
+function busy(on,t){ $('busy').classList.toggle('on',on); if(t) $('busyTxt').textContent=t; clearTimeout(BUSY_T); $('busyHide').hidden=true; if(on) BUSY_T=setTimeout(()=>{ $('busyHide').hidden=false; },45000); }
+// Errores no previstos: que se vean siempre
+addEventListener('error',e=>{ try{ toast('Error: '+(e.message||e.error||'desconocido'),8000); }catch(_){} });
+addEventListener('unhandledrejection',e=>{ try{ toast('Error: '+((e.reason&&e.reason.message)||e.reason||'desconocido'),8000); }catch(_){} });
+const withTimeout=(p,ms,msg)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(msg||'tiempo agotado')),ms))]);
 
 // ----- Guardado local (IndexedDB)
 const Store = {
@@ -3147,6 +3157,7 @@ async function mediaBlocks(gp,segs,st,photoTitle){
 // El croquis nunca debe impedir generar el documento: si falla o tarda demasiado, se repite sin pedir ortofoto al IGN y, si aún falla, se omite avisando
 let MAP_LIVE=true;
 async function safeMap(gp,segs,st){
+  busy(true,'Dibujando el croquis…');
   const tryOnce=(ms)=>Promise.race([mapBlocks(gp,segs,st), new Promise((_,rej)=>setTimeout(()=>rej(new Error('tiempo agotado')),ms))]);
   try{ MAP_LIVE=true; return await tryOnce(30000); }
   catch(e){ console.error('croquis',e);
@@ -3316,11 +3327,11 @@ async function buildDoc(opt={}){
     footer:`${m.titulo}${v.expediente?' · Exp. '+v.expediente:''}`, author:CFG.nombre, blocks };
   return opt.model ? model : buildDocx(model);
 }
-async function makeDocBlob(opt){ const parts=await buildDoc(opt); await persistNow(); return new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}); }
+async function makeDocBlob(opt){ const parts=await buildDoc(opt); busy(true,'Guardando la visita…'); await persistNow(); return new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}); }
 function docName(){ return `${M().corto}_${slug(S.v.asunto||S.v.paraje||S.v.municipio)||'visita'}_${S.v.fecha||today()}`.replace('__','_'); }
 async function genUnsigned(){
   busy(true,'Generando documento…');
-  try{ const blob=await makeDocBlob({}); const name=docName()+'.docx'; await afterDoc('Word generado',{name,blob}); busy(false); await deliver(blob,name,'Documento'); }
+  try{ const blob=await makeDocBlob({}); const name=docName()+'.docx'; busy(false); await deliver(blob,name,'Documento'); await afterDoc('Word generado',{name,blob}); }
   catch(e){ busy(false); console.error(e); toast('Error al generar: '+(e.message||e)); }
 }
 async function genSigned(pwd){
@@ -3357,7 +3368,9 @@ document.querySelectorAll('input[name=gfmt]').forEach(r=>r.onchange=()=>{ CFG.la
 $('genSign').onchange=updGen;
 $('genCancel').onclick=()=>{ $('genSheet').classList.remove('on'); $('genPwd').value=''; };
 $('genForm').onsubmit=async e=>{
-  e.preventDefault(); $('genErr').textContent=''; await Folder.ready(true);
+  e.preventDefault(); GEN_T0=Date.now(); $('genErr').textContent=''; busy(true,'Preparando…');
+  try{ await withTimeout(Folder.ready(true),5000); }catch(err){ console.warn('carpeta',err); }
+  busy(false);
   if(genFmt()==='docx'){ $('genSheet').classList.remove('on'); return genUnsigned(); }
   const signIt=!!CFG.cert && $('genSign').checked, pw=$('genPwd').value;
   if(signIt && !pw){ $('genErr').textContent='Escribe la contraseña del certificado'; return; }
@@ -3383,13 +3396,14 @@ async function genPdf(pw){
   try{
     const when=new Date(), info=pw?CFG.cert.info:null;
     const model=await prepPdf(await buildDoc({model:true,pdf:true,cert:info,when}));
-    await persistNow();
+    busy(true,'Guardando la visita…'); await persistNow();
+    busy(true, pw?'Componiendo y firmando el PDF…':'Componiendo el PDF…');
     const opts = pw ? { sign:{ cms: async bytes=>PKI.signDetached(await CFG.cert.blob.arrayBuffer(),pw,bytes), name:info.name, reason:`${M().titulo} — firma del funcionario actuante`, location:S.v.municipio||'' } } : {};
     const bytes=await PDF.build(model,opts);
     const pblob=new Blob([bytes],{type:'application/pdf'}), pname=docName()+(pw?'_firmado':'')+'.pdf';
-    await afterDoc(pw?'PDF firmado':'PDF generado',{name:pname,blob:pblob});
     busy(false); $('genSheet').classList.remove('on'); $('genPwd').value='';
     await deliver(pblob, pname, pw?'PDF firmado':'PDF');
+    await afterDoc(pw?'PDF firmado':'PDF generado',{name:pname,blob:pblob});
   }catch(e){ busy(false); console.error(e); const msg=PKI.errMsg(e); $('genErr').textContent=msg; toast('Error al generar el PDF: '+msg,8000); }
 }
 let PWD_MODE='sign', PENDING_CERT=null;
@@ -3401,7 +3415,7 @@ $('pwdForm').onsubmit=async e=>{ e.preventDefault(); const pw=$('pwdIn').value; 
   }catch(err){ busy(false); $('pwdErr').textContent=PKI.errMsg(err); $('pwdIn').value=''; }
 };
 $('pwdCancel').onclick=()=>{ $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; PENDING_CERT=null; };
-$('pwdAlt').onclick=()=>{ $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; genUnsigned(); };
+$('pwdAlt').onclick=()=>{ $('pwdSheet').classList.remove('on'); $('pwdIn').value=''; GEN_T0=Date.now(); genUnsigned(); };
 $('btnCert').onclick=()=>$('inCert').click();
 $('inCert').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; PENDING_CERT=f; PWD_MODE='load';
   $('pwdTitle').textContent='Cargar certificado'; $('pwdInfo').textContent=f.name; $('pwdErr').textContent=''; $('pwdAlt').hidden=true; $('pwdSheet').classList.add('on'); setTimeout(()=>$('pwdIn').focus(),50); };
@@ -3446,9 +3460,25 @@ async function deliver(blob,name,what){
     catch(e){ toast(e&&e.code==='declined'?'Descarga cancelada':'No se pudo guardar ('+(e&&e.code||'error')+')'); }
     return;
   }
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000); toast(`${what} descargado ✔`);
+  // Si ha pasado tiempo desde que se pulsó «Generar», el navegador puede bloquear la descarga automática:
+  // se muestra una ventana con el botón de descarga (pulsación nueva del usuario).
+  if(Date.now()-GEN_T0>3500){ showReady(blob,name,what); return; }
+  downloadNow(blob,name,what);
 }
+let GEN_T0=0, READY=null;
+function downloadNow(blob,name,what){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },60000); toast(`${what} descargado ✔`);
+}
+function showReady(blob,name,what){
+  READY={blob,name,what}; $('rdName').textContent=name;
+  const f=new File([blob],name,{type:blob.type}); $('rdShare').hidden=!(navigator.canShare&&navigator.canShare({files:[f]}));
+  $('readySheet').classList.add('on');
+}
+$('rdDl').onclick=()=>{ if(READY) downloadNow(READY.blob,READY.name,READY.what); $('readySheet').classList.remove('on'); };
+$('rdShare').onclick=async()=>{ if(!READY) return; try{ await navigator.share({files:[new File([READY.blob],READY.name,{type:READY.blob.type})],title:READY.name}); $('readySheet').classList.remove('on'); }catch(e){ if(e.name!=='AbortError') toast('No se pudo compartir: '+e.message); } };
+$('rdClose').onclick=()=>$('readySheet').classList.remove('on');
+$('busyHide').onclick=()=>busy(false);
 
 // =====================================================================
 // VISTAS: inicio, lista de visitas y formulario
@@ -3538,7 +3568,7 @@ async function closeVisit() {
 async function afterDoc(status, doc) {
   S.status = status; S.docs = [...(S.docs || []), { name: doc.name, ts: Date.now() }];
   await persistNow();
-  try { const where = await archiveToFolder(S, [doc]); if (where) { await persistNow(); setTimeout(() => toast('Copia guardada en ' + where, 3500), 2900); } }
+  try { const where = await withTimeout(archiveToFolder(S, [doc]), 30000, 'la carpeta no responde'); if (where) { await persistNow(); setTimeout(() => toast('Copia guardada en ' + where, 3500), 2900); } }
   catch (e) { console.error(e); }
 }
 function initViews() {
